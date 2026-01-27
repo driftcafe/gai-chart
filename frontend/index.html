@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generative Charts - AI for Financial Data</title>
+  <meta name="description" content="Transform natural language questions into dynamic, interactive financial charts">
+
+  <!-- Apache ECharts -->
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-content">
+      <div class="logo">
+        <div>
+          <div class="logo-text">Generative Charts</div>
+          <!-- Subtitle removed for cleaner look -->
+        </div>
+      </div>
+      <div style="display: flex; gap: 16px; align-items: center;">
+        <div class="dataset-selector">
+          <label for="dataset-select">Dataset:</label>
+          <select id="dataset-select">
+            <option value="quarterly_financials">Quarterly Financials</option>
+          </select>
+        </div>
+        <button id="theme-toggle" class="btn"
+          style="background: transparent; color: var(--color-text-primary); padding: 8px; border-radius: 50%;">
+          <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20" fill="currentColor">
+            <path
+              d="M480-120q-150 0-255-105T120-480q0-150 105-255t255-105q14 0 27.5 1t26.5 3q-41 29-65.5 75.5T444-660q0 90 63 153t153 63q55 0 101-24.5t75-65.5q2 13 3 26.5t1 27.5q0 150-105 255T480-120Z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <div class="container">
+    <div class="main-content">
+
+      <!-- Chat Interface -->
+      <div class="chat-container">
+        <div class="chat-header">
+          <h2>Ask a Question</h2>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+          <div class="message assistant">
+            <div class="message-label">AI Assistant</div>
+            <div class="message-content">
+              👋 Hello! I'm your AI assistant for financial data visualization.
+              Ask me questions like "Show me Q3 Revenue vs Costs" or "Compare margins across regions".
+              I'll generate interactive charts for you.
+            </div>
+          </div>
+        </div>
+        <div class="chat-input-container">
+          <div class="input-wrapper">
+            <input type="text" id="chat-input" class="chat-input" placeholder="e.g., Show me Q3 Revenue vs Costs"
+              autocomplete="off">
+            <button id="send-button" class="btn btn-primary">
+              Generate
+            </button>
+          </div>
+          <div id="error-container"></div>
+        </div>
+      </div>
+
+      <!-- Chart Display -->
+      <div class="chart-container">
+        <div class="chart-header">
+          <h2 id="chart-title" class="chart-title">Visualization</h2>
+          <span class="chart-meta">Interactive Chart</span>
+        </div>
+        <div class="chart-content">
+          <!-- Empty State -->
+          <div id="empty-state" class="empty-state">
+            <div class="empty-state-icon">📊</div>
+            <div class="empty-state-title">No chart yet</div>
+            <div class="empty-state-description">
+              Ask a question above to generate your first visualization
+            </div>
+          </div>
+
+          <!-- Chart Container -->
+          <div id="chart-container" style="display: none;">
+            <div id="chart"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- App Script -->
+  <script src="app.js"></script>
+</body>
+
+</html>
