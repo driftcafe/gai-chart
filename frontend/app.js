@@ -255,250 +255,334 @@ class HilaApp {
          * This is where we inject actual financial data into the LLM-generated config.
          * The LLM only saw the schema, never the actual values.
          */
-        const option = JSON.parse(JSON.stringify(echartOption)); // Deep clone
+        try {
+            const option = JSON.parse(JSON.stringify(echartOption)); // Deep clone
 
-        // Apply filters if specified in dataMapping
-        let filteredData = data;
-        if (dataMapping && dataMapping.filters) {
-            filteredData = data.filter(row => {
-                return dataMapping.filters.every(filter => {
-                    const value = row[filter.field];
-                    switch (filter.operator) {
-                        case 'equals':
-                        case '==':
-                            return value == filter.value;
-                        case 'contains':
-                            return String(value).toLowerCase().includes(String(filter.value).toLowerCase());
-                        case 'in':
-                            // Check if value is in the array
-                            return Array.isArray(filter.value) && filter.value.includes(value);
-                        case '>':
-                            return parseFloat(value) > parseFloat(filter.value);
-                        case '<':
-                            return parseFloat(value) < parseFloat(filter.value);
-                        case '>=':
-                            return parseFloat(value) >= parseFloat(filter.value);
-                        case '<=':
-                            return parseFloat(value) <= parseFloat(filter.value);
-                        default:
-                            return true;
-                    }
+            // Debug logging to help troubleshoot issues
+            console.log('Injecting data into chart config');
+            console.log('Chart type:', option.series?.[0]?.type);
+            console.log('Data rows:', data.length);
+            console.log('Filters:', dataMapping?.filters);
+
+            // Apply filters if specified in dataMapping
+            let filteredData = data;
+            if (dataMapping && dataMapping.filters) {
+                filteredData = data.filter(row => {
+                    return dataMapping.filters.every(filter => {
+                        const value = row[filter.field];
+                        switch (filter.operator) {
+                            case 'equals':
+                            case '==':
+                                return value == filter.value;
+                            case 'contains':
+                                return String(value).toLowerCase().includes(String(filter.value).toLowerCase());
+                            case 'in':
+                                // Check if value is in the array
+                                return Array.isArray(filter.value) && filter.value.includes(value);
+                            case '>':
+                                return parseFloat(value) > parseFloat(filter.value);
+                            case '<':
+                                return parseFloat(value) < parseFloat(filter.value);
+                            case '>=':
+                                return parseFloat(value) >= parseFloat(filter.value);
+                            case '<=':
+                                return parseFloat(value) <= parseFloat(filter.value);
+                            default:
+                                return true;
+                        }
+                    });
                 });
-            });
-        }
-
-        // Fix tooltip formatters that break multi-series charts
-        // The LLM sometimes generates formatters like "{b0}: {c0}" which only work for single series
-        if (option.tooltip && option.tooltip.formatter) {
-            // Remove restrictive formatters - let ECharts use its default multi-series tooltip
-            if (typeof option.tooltip.formatter === 'string' &&
-                (option.tooltip.formatter.includes('{b0}') || option.tooltip.formatter.includes('{c0}'))) {
-                delete option.tooltip.formatter;
             }
-        }
 
-        // Inject xAxis data
-        if (option.xAxis) {
-            const axes = Array.isArray(option.xAxis) ? option.xAxis : [option.xAxis];
-            axes.forEach(ax => {
-                if (ax.data && ax.data.dataField) {
-                    const field = ax.data.dataField;
-                    // Handle both string (column name) and array (literal values)
-                    if (Array.isArray(field)) {
-                        // LLM provided literal values (e.g., ["FY26-Q1", "FY26-Q2", ...])
-                        ax.data = field;
-                    } else {
-                        // LLM provided a column name to look up
-                        ax.data = filteredData.map(row => row[field]);
-                    }
+            // Fix tooltip formatters that break multi-series charts
+            // The LLM sometimes generates formatters like "{b0}: {c0}" which only work for single series
+            if (option.tooltip && option.tooltip.formatter) {
+                // Remove restrictive formatters - let ECharts use its default multi-series tooltip
+                if (typeof option.tooltip.formatter === 'string' &&
+                    (option.tooltip.formatter.includes('{b0}') || option.tooltip.formatter.includes('{c0}'))) {
+                    delete option.tooltip.formatter;
                 }
-                // If ax.data is already an array (hardcoded), leave it as is
-            });
-        }
+            }
 
-        // Inject series data
-        if (option.series && Array.isArray(option.series)) {
-            // Check if we're filtering by Product Group Name (for multiple specific categories)
-            const productGroupFilter = dataMapping && dataMapping.filters &&
-                dataMapping.filters.find(f => f.field === "Product Group Name");
-
-            // For multiple specific categories (using 'in' operator), filter each series to its own data
-            if (productGroupFilter && productGroupFilter.operator === 'in' && Array.isArray(productGroupFilter.value)) {
-                // Each series should show only its own product group's data
-                option.series = option.series.map(series => {
-                    // Fix: LLM sometimes generates 'bubble' type which isn't valid in ECharts
-                    if (series.type === 'bubble') {
-                        series.type = 'scatter';
-                    }
-
-                    // Filter data to this series' product group
-                    const seriesData = filteredData.filter(row => row["Product Group Name"] === series.name);
-
-                    // Only apply generic mapping if dataField is a STRING (not an array)
-                    if (series.data && series.data.dataField && typeof series.data.dataField === 'string') {
-                        const field = series.data.dataField;
-                        series.data = seriesData.map(row => row[field]);
-                    } else if (series.data && series.data.dataField && Array.isArray(series.data.dataField)) {
-                        // Handle array of fields (for multi-column data like quarters)
-                        const fields = series.data.dataField;
-                        // For each row matching this series, extract values from all specified fields
-                        if (seriesData.length > 0) {
-                            series.data = fields.map(field => {
-                                const value = seriesData[0][field];
-                                return typeof value === 'string' ? parseFloat(value) : value;
-                            });
+            // Inject xAxis data
+            if (option.xAxis) {
+                const axes = Array.isArray(option.xAxis) ? option.xAxis : [option.xAxis];
+                axes.forEach(ax => {
+                    if (ax.data && ax.data.dataField) {
+                        const field = ax.data.dataField;
+                        // Handle both string (column name) and array (literal values)
+                        if (Array.isArray(field)) {
+                            // LLM provided literal values (e.g., ["FY26-Q1", "FY26-Q2", ...])
+                            ax.data = field;
                         } else {
-                            series.data = [];
+                            // LLM provided a column name to look up
+                            const extractedData = filteredData.map(row => row[field]);
+                            // Validate that we got actual data
+                            if (extractedData.length > 0 && extractedData.some(val => val !== undefined && val !== null)) {
+                                ax.data = extractedData;
+                            } else {
+                                console.warn(`No valid data found for xAxis field: ${field}`);
+                                // Fallback: use row indices
+                                ax.data = filteredData.map((_, idx) => `Item ${idx + 1}`);
+                            }
+                        }
+                    } else if (!ax.data || (Array.isArray(ax.data) && ax.data.length === 0)) {
+                        // If no data specified at all, generate default labels
+                        if (filteredData.length > 0) {
+                            ax.data = filteredData.map((_, idx) => `Item ${idx + 1}`);
                         }
                     }
-                    return series;
+                    // If ax.data is already an array (hardcoded), leave it as is
                 });
-            } else {
-                // Original logic for single category or other filter types
-                let seriesToRender = option.series;
-                if (productGroupFilter) {
-                    seriesToRender = option.series.filter(series => {
-                        if (productGroupFilter.operator === 'equals') {
-                            return series.name === productGroupFilter.value;
-                        } else if (productGroupFilter.operator === 'contains') {
-                            return series.name && series.name.toLowerCase().includes(productGroupFilter.value.toLowerCase());
+            }
+
+            // Inject series data
+            if (option.series && Array.isArray(option.series)) {
+                // Detect if we're filtering by any categorical field with 'in' operator (for multi-series charts)
+                const categoricalFilter = dataMapping && dataMapping.filters &&
+                    dataMapping.filters.find(f => f.operator === 'in' && Array.isArray(f.value));
+
+                // For multiple specific categories (using 'in' operator), filter each series to its own data
+                if (categoricalFilter) {
+                    const filterField = categoricalFilter.field;
+
+                    // Each series should show only its own category's data
+                    option.series = option.series.map(series => {
+                        // Fix: LLM sometimes generates 'bubble' type which isn't valid in ECharts
+                        if (series.type === 'bubble') {
+                            series.type = 'scatter';
                         }
-                        return true;
+
+                        // Multi-dimensional charts (scatter, heatmap) are handled in dedicated blocks below
+                        // We don't process their data here, but we don't skip them entirely
+                        const isMultiDimensional = series.type === 'scatter' || series.type === 'effectScatter' || series.type === 'heatmap';
+
+                        if (!isMultiDimensional) {
+                            // Filter data to this series' category
+                            const seriesData = filteredData.filter(row => row[filterField] === series.name);
+
+                            // Only apply generic mapping if dataField is a STRING (not an array)
+                            if (series.data && series.data.dataField && typeof series.data.dataField === 'string') {
+                                const field = series.data.dataField;
+                                series.data = seriesData.map(row => row[field]);
+                            } else if (series.data && series.data.dataField && Array.isArray(series.data.dataField)) {
+                                // Handle array of fields (for multi-column data like quarters)
+                                const fields = series.data.dataField;
+                                // For each row matching this series, extract values from all specified fields
+                                if (seriesData.length > 0) {
+                                    series.data = fields.map(field => {
+                                        const value = seriesData[0][field];
+                                        return typeof value === 'string' ? parseFloat(value) : value;
+                                    });
+                                } else {
+                                    series.data = [];
+                                }
+                            }
+                        }
+                        return series;
+                    });
+                } else {
+                    // Single category filter or no categorical filter
+                    let seriesToRender = option.series;
+
+                    // Check for any single-value categorical filter (equals/contains)
+                    const singleCategoryFilter = dataMapping && dataMapping.filters &&
+                        dataMapping.filters.find(f => f.operator === 'equals' || f.operator === 'contains');
+
+                    if (singleCategoryFilter) {
+                        seriesToRender = option.series.filter(series => {
+                            if (singleCategoryFilter.operator === 'equals') {
+                                return series.name === singleCategoryFilter.value;
+                            } else if (singleCategoryFilter.operator === 'contains') {
+                                return series.name && series.name.toLowerCase().includes(singleCategoryFilter.value.toLowerCase());
+                            }
+                            return true;
+                        });
+                    }
+
+                    // Inject data into series
+                    option.series = seriesToRender.map(series => {
+                        // Fix: LLM sometimes generates 'bubble' type which isn't valid in ECharts
+                        if (series.type === 'bubble') {
+                            series.type = 'scatter';
+                        }
+
+                        // Skip multi-dimensional charts here - they are handled in dedicated blocks below
+                        if (series.type === 'scatter' || series.type === 'effectScatter' || series.type === 'heatmap') {
+                            return series;
+                        }
+
+                        // Handle dataField for series data
+                        if (series.data && series.data.dataField) {
+                            const dataField = series.data.dataField;
+
+                            if (typeof dataField === 'string') {
+                                // Single column name - map from filtered data
+                                const extractedData = filteredData.map(row => {
+                                    const value = row[dataField];
+                                    // Parse to number if it's a string
+                                    return typeof value === 'string' ? parseFloat(value) : value;
+                                });
+
+                                // Validate we got valid numeric data
+                                if (extractedData.some(val => !isNaN(val) && val !== null && val !== undefined)) {
+                                    series.data = extractedData;
+                                } else {
+                                    console.warn(`No valid numeric data found for series field: ${dataField}`);
+                                    series.data = [];
+                                }
+                            } else if (Array.isArray(dataField)) {
+                                // Array of column names (e.g., quarters) - extract values from each column
+                                // For filtered data (e.g., revenue > 5M), extract values from matching rows
+                                if (filteredData.length > 0) {
+                                    series.data = dataField.map(field => {
+                                        const value = filteredData[0][field];
+                                        const numValue = typeof value === 'string' ? parseFloat(value) : value;
+                                        return isNaN(numValue) ? 0 : numValue;
+                                    });
+                                } else {
+                                    series.data = [];
+                                }
+                            }
+                        }
+                        // If series.data is already an array (hardcoded), leave it as is
+                        return series;
                     });
                 }
+            }
 
-                // Inject data into series
-                option.series = seriesToRender.map(series => {
-                    // Fix: LLM sometimes generates 'bubble' type which isn't valid in ECharts
-                    if (series.type === 'bubble') {
-                        series.type = 'scatter';
-                    }
+            // Handle pie charts (different data structure)
+            if (option.series && option.series[0] && option.series[0].type === 'pie') {
+                if (option.series[0].data && Array.isArray(option.series[0].data)) {
+                    option.series[0].data = option.series[0].data.map(item => {
+                        if (item.value && item.value.dataField) {
+                            const field = item.value.dataField;
+                            // Sum values for pie chart
+                            const sum = data.reduce((acc, row) => acc + (row[field] || 0), 0);
+                            return { ...item, value: sum };
+                        }
+                        return item;
+                    });
+                }
+            }
 
-                    // Skip multi-dimensional charts here - they are handled in dedicated blocks below
-                    if (series.type === 'scatter' || series.type === 'effectScatter' || series.type === 'heatmap') {
+            // Handle scatter and bubble charts (multi-dimensional data points)
+            if (option.series && option.series.length > 0) {
+                const firstSeries = option.series[0];
+                if (firstSeries.type === 'scatter' || firstSeries.type === 'effectScatter') {
+                    option.series = option.series.map(series => {
+                        // Handle both formats: {dataField: [...]} or [{dataField: [...]}]
+                        let dataFieldObj = series.data;
+                        if (Array.isArray(series.data) && series.data.length > 0 && series.data[0].dataField) {
+                            dataFieldObj = series.data[0];
+                        }
+
+                        if (dataFieldObj && dataFieldObj.dataField) {
+                            const fields = dataFieldObj.dataField;
+
+                            // If dataField is an array of column names [x, y] or [x, y, size]
+                            if (Array.isArray(fields)) {
+                                console.log('Scatter/bubble chart fields:', fields);
+
+                                // Check if we have enough dimensions for a scatter plot
+                                if (fields.length < 2) {
+                                    console.warn(`Scatter chart needs at least 2 dimensions, got ${fields.length}. Adding row index as x-axis.`);
+                                    // Fallback: use row index as x-axis and the single field as y-axis
+                                    series.data = filteredData.map((row, index) => {
+                                        const value = row[fields[0]];
+                                        const numValue = typeof value === 'string' ? parseFloat(value) : value;
+                                        return [index, numValue];
+                                    });
+                                } else {
+                                    // Normal case: 2 or 3 dimensions
+                                    series.data = filteredData.map(row => {
+                                        // Parse values to numbers (data comes as strings from CSV)
+                                        const point = fields.map(field => {
+                                            const value = row[field];
+                                            const numValue = typeof value === 'string' ? parseFloat(value) : value;
+                                            return numValue;
+                                        });
+                                        return point;
+                                    });
+                                }
+
+                                console.log('Scatter/bubble data points:', series.data.length);
+                                console.log('Sample point:', series.data[0]);
+
+                                // Validate data - filter out invalid points
+                                series.data = series.data.filter(point => {
+                                    return Array.isArray(point) && point.length >= 2 && point.every(val => !isNaN(val) && val !== null && val !== undefined);
+                                });
+
+                                if (series.data.length === 0) {
+                                    console.warn('No valid scatter/bubble data points after filtering');
+                                }
+
+                                // For bubble charts (3 dimensions), add symbolSize function
+                                if (fields.length === 3 && !series.symbolSize && series.data.length > 0) {
+                                    // Use the third dimension (size) to scale bubble size
+                                    const sizeValues = series.data.map(point => point[2]);
+                                    const maxSize = Math.max(...sizeValues);
+                                    const minSize = Math.min(...sizeValues);
+
+                                    console.log('Bubble size range:', minSize, 'to', maxSize);
+
+                                    series.symbolSize = function (data) {
+                                        // Scale between 10 and 60 pixels based on size value
+                                        const normalized = (data[2] - minSize) / (maxSize - minSize);
+                                        return 10 + normalized * 50;
+                                    };
+                                }
+                            }
+                            // If dataField is a single column (fallback)
+                            else {
+                                series.data = filteredData.map((row, index) => {
+                                    const value = row[fields];
+                                    const numValue = typeof value === 'string' ? parseFloat(value) : value;
+                                    return [index, numValue];
+                                });
+                            }
+                        }
                         return series;
-                    }
+                    });
+                }
+            }
 
-                    // Handle dataField for series data
+            // Handle heatmap charts (requires [[x, y, value]] format)
+            if (option.series && option.series.length > 0 && option.series[0].type === 'heatmap') {
+                option.series = option.series.map(series => {
                     if (series.data && series.data.dataField) {
                         const dataField = series.data.dataField;
 
-                        if (typeof dataField === 'string') {
-                            // Single column name - map from filtered data
-                            series.data = filteredData.map(row => row[dataField]);
-                        } else if (Array.isArray(dataField)) {
-                            // Array of column names (e.g., quarters) - extract values from each column
-                            // For filtered data (e.g., revenue > 5M), extract values from matching rows
-                            if (filteredData.length > 0) {
-                                series.data = dataField.map(field => {
-                                    const value = filteredData[0][field];
-                                    return typeof value === 'string' ? parseFloat(value) : value;
-                                });
-                            } else {
-                                series.data = [];
-                            }
-                        }
-                    }
-                    // If series.data is already an array (hardcoded), leave it as is
-                    return series;
-                });
-            }
-        }
-
-        // Handle pie charts (different data structure)
-        if (option.series && option.series[0] && option.series[0].type === 'pie') {
-            if (option.series[0].data && Array.isArray(option.series[0].data)) {
-                option.series[0].data = option.series[0].data.map(item => {
-                    if (item.value && item.value.dataField) {
-                        const field = item.value.dataField;
-                        // Sum values for pie chart
-                        const sum = data.reduce((acc, row) => acc + (row[field] || 0), 0);
-                        return { ...item, value: sum };
-                    }
-                    return item;
-                });
-            }
-        }
-
-        // Handle scatter and bubble charts (multi-dimensional data points)
-        if (option.series && option.series.length > 0) {
-            const firstSeries = option.series[0];
-            if (firstSeries.type === 'scatter' || firstSeries.type === 'effectScatter') {
-                option.series = option.series.map(series => {
-                    // Handle both formats: {dataField: [...]} or [{dataField: [...]}]
-                    let dataFieldObj = series.data;
-                    if (Array.isArray(series.data) && series.data.length > 0 && series.data[0].dataField) {
-                        dataFieldObj = series.data[0];
-                    }
-
-                    if (dataFieldObj && dataFieldObj.dataField) {
-                        const fields = dataFieldObj.dataField;
-
-                        // If dataField is an array of column names [x, y] or [x, y, size]
-                        if (Array.isArray(fields)) {
-                            series.data = filteredData.map(row => {
-                                // Parse values to numbers (data comes as strings from CSV)
-                                const point = fields.map(field => {
+                        // If dataField is an array of column names (quarters)
+                        if (Array.isArray(dataField)) {
+                            // Convert to [[x, y, value]] format
+                            // x = quarter index, y = product index, value = revenue
+                            const heatmapData = [];
+                            filteredData.forEach((row, yIndex) => {
+                                dataField.forEach((field, xIndex) => {
                                     const value = row[field];
-                                    return typeof value === 'string' ? parseFloat(value) : value;
+                                    const numValue = typeof value === 'string' ? parseFloat(value) : value;
+                                    heatmapData.push([xIndex, yIndex, numValue || 0]);
                                 });
-                                return point;
                             });
-
-                            // For bubble charts (3 dimensions), add symbolSize function
-                            if (fields.length === 3 && !series.symbolSize) {
-                                // Use the third dimension (size) to scale bubble size
-                                const sizeValues = series.data.map(point => point[2]);
-                                const maxSize = Math.max(...sizeValues);
-                                const minSize = Math.min(...sizeValues);
-
-                                series.symbolSize = function (data) {
-                                    // Scale between 10 and 60 pixels based on size value
-                                    const normalized = (data[2] - minSize) / (maxSize - minSize);
-                                    return 10 + normalized * 50;
-                                };
-                            }
-                        }
-                        // If dataField is a single column (fallback)
-                        else {
-                            series.data = filteredData.map((row, index) => {
-                                const value = row[fields];
-                                const numValue = typeof value === 'string' ? parseFloat(value) : value;
-                                return [index, numValue];
-                            });
+                            series.data = heatmapData;
                         }
                     }
                     return series;
                 });
             }
+
+            return option;
+        } catch (error) {
+            console.error('Error injecting data into chart config:', error);
+            console.error('Chart config:', echartOption);
+            console.error('Data mapping:', dataMapping);
+
+            // Fallback: return original option and let ECharts handle it
+            // This prevents complete chart failure
+            return echartOption;
         }
-
-        // Handle heatmap charts (requires [[x, y, value]] format)
-        if (option.series && option.series.length > 0 && option.series[0].type === 'heatmap') {
-            option.series = option.series.map(series => {
-                if (series.data && series.data.dataField) {
-                    const dataField = series.data.dataField;
-
-                    // If dataField is an array of column names (quarters)
-                    if (Array.isArray(dataField)) {
-                        // Convert to [[x, y, value]] format
-                        // x = quarter index, y = product index, value = revenue
-                        const heatmapData = [];
-                        filteredData.forEach((row, yIndex) => {
-                            dataField.forEach((field, xIndex) => {
-                                const value = row[field];
-                                const numValue = typeof value === 'string' ? parseFloat(value) : value;
-                                heatmapData.push([xIndex, yIndex, numValue || 0]);
-                            });
-                        });
-                        series.data = heatmapData;
-                    }
-                }
-                return series;
-            });
-        }
-
-        return option;
     }
 
     applyPremiumStyles(option) {
