@@ -369,6 +369,11 @@ class HilaApp {
                         series.type = 'scatter';
                     }
 
+                    // Skip multi-dimensional charts here - they are handled in dedicated blocks below
+                    if (series.type === 'scatter' || series.type === 'effectScatter' || series.type === 'heatmap') {
+                        return series;
+                    }
+
                     // Handle dataField for series data
                     if (series.data && series.data.dataField) {
                         const dataField = series.data.dataField;
