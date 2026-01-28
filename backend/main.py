@@ -89,6 +89,90 @@ async def get_dataset_info(dataset_name: str):
         raise HTTPException(status_code=404, detail=f"Dataset not found: {str(e)}")
 
 
+@app.get("/api/init", response_model=ChartResponse)
+async def initialize_app():
+    """
+    Cold Start endpoint - loads default_data.csv and returns a pre-configured chart.
+    This allows the app to show data immediately on page load.
+    """
+    import csv
+    import os
+    
+    try:
+        # Read default_data.csv
+        csv_path = os.path.join(os.path.dirname(__file__), "..", "default_data.csv")
+        
+        with open(csv_path, 'r') as f:
+            reader = csv.DictReader(f)
+            data = list(reader)
+        
+        if not data:
+            raise Exception("default_data.csv is empty")
+        
+        # Create a default line chart configuration
+        # Show revenue trends across quarters for top 5 product groups
+        config = {
+            "title": "Product Group Revenue Trends (FY26-FY27)",
+            "echartOption": {
+                "tooltip": {
+                    "trigger": "axis"
+                },
+                "legend": {
+                    "data": [row["Product Group Name"] for row in data[:5]]
+                },
+                "xAxis": {
+                    "type": "category",
+                    "data": ["FY26-Q1", "FY26-Q2", "FY26-Q3", "FY26-Q4", 
+                            "FY27-Q1", "FY27-Q2", "FY27-Q3", "FY27-Q4"]
+                },
+                "yAxis": {
+                    "type": "value",
+                    "name": "Revenue (USD)",
+                    "axisLabel": {
+                        "formatter": "${value}"
+                    }
+                },
+                "series": [
+                    {
+                        "name": row["Product Group Name"],
+                        "type": "line",
+                        "data": [
+                            float(row["FY26-Q1"]),
+                            float(row["FY26-Q2"]),
+                            float(row["FY26-Q3"]),
+                            float(row["FY26-Q4"]),
+                            float(row["FY27-Q1"]),
+                            float(row["FY27-Q2"]),
+                            float(row["FY27-Q3"]),
+                            float(row["FY27-Q4"])
+                        ],
+                        "smooth": True
+                    }
+                    for row in data[:5]  # Top 5 product groups
+                ]
+            },
+            "dataMapping": {}  # No data injection needed - data is already in config
+        }
+        
+        # Create initial conversation context
+        initial_context = [
+            {
+                "role": "assistant",
+                "content": f"I've loaded your default dataset with {len(data)} product groups showing quarterly revenue from FY26-Q1 to FY27-Q4. The chart displays revenue trends for the top 5 product groups. You can ask me to modify this chart or create a new one."
+            }
+        ]
+        
+        return ChartResponse(
+            success=True,
+            config=config,
+            data=data,  # Send raw data for potential future modifications
+            conversation_history=initial_context
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error initializing app: {str(e)}")
+
+
 @app.post("/api/generate-chart", response_model=ChartResponse)
 async def generate_chart(request: ChartRequest):
     """

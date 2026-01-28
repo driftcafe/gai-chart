@@ -1,368 +1,306 @@
-# 🎬 Hila Demo Script - Most Exciting Use Cases
+# Hila Demo Script - Generative Charts for Financial Data
 
-## 🌟 **The "WOW" Demo Flow**
+## Overview
+This demo showcases Hila's ability to generate and refine various chart types from natural language queries. Starting from a default view, we'll conversationally explore the data using line charts, bar charts, bubble charts, heatmaps, and treemaps.
 
-This demo script showcases Hila's most impressive capabilities in a logical, compelling sequence.
-
----
-
-## 🎯 **Demo 1: The Natural Language Magic** (2 minutes)
-
-**Goal:** Show that Hila understands business questions, not just chart commands.
-
-### **Sequence:**
-
-1. **"Show me revenue vs costs"**
-   - 🎯 Shows: Natural language understanding
-   - ✅ Expected: Line chart with revenue and costs
-   - 💡 Wow factor: No mention of "chart" or "visualize" needed!
-
-2. **"Add margin to see profitability"**
-   - 🎯 Shows: Conversational context
-   - ✅ Expected: Adds margin series to existing chart
-   - 💡 Wow factor: Builds on previous chart!
-
-3. **"Which quarter had the best margins?"**
-   - 🎯 Shows: Analytical understanding
-   - ✅ Expected: Margin chart showing all quarters
-   - 💡 Wow factor: Understands "best" means highest values!
-
-**Why this works:**
-- No technical jargon
-- Feels like talking to an analyst
-- Shows intelligence, not just pattern matching
-
-**Note:** Avoid queries like "Compare Q3 to Q4" - Claude Haiku struggles with data filtering. Instead, show all quarters and let the visual comparison happen naturally.
+**Dataset**: 18 product groups with quarterly revenue data (FY26-Q1 to FY27-Q4)
 
 ---
 
-## 🎯 **Demo 2: The Iterative Refinement** (2 minutes)
+## Demo Flow (6-8 minutes)
 
-**Goal:** Show conversational chart building - the killer feature!
+### 1. **Cold Start - Default Line Chart** (45 seconds)
+**Action**: Open http://localhost:3000
 
-### **Sequence:**
+**What to say**:
+> "Welcome to Hila - a generative charting application powered by AI. When you load the app, it automatically displays your data. Here we see revenue trends for the top 5 product groups across 8 fiscal quarters from FY26 to FY27. This is our starting point."
 
-1. **"Show me revenue trends"**
-   - ✅ Creates basic line chart
+**What you'll see**: 
+- Line chart with 5 colored lines (top 5 product groups)
+- X-axis: FY26-Q1 through FY27-Q4
+- Y-axis: Revenue in USD
+- Smooth trend lines showing quarterly performance
+- Legend identifying each product group
+- Assistant message: "I've loaded your default dataset with 18 product groups..."
 
-2. **"Add costs to compare"**
-   - ✅ Adds second series
-   - 💡 Wow: Doesn't start over, modifies existing chart!
-
-3. **"Make it a bar chart"**
-   - ✅ Changes chart type
-   - 💡 Wow: Keeps the data, just changes visualization!
-
-4. **"Add margin to see profitability"**
-   - ✅ Adds third metric
-   - 💡 Wow: Builds complexity through conversation!
-
-**Why this works:**
-- Shows the power of conversation
-- No need to start over with each change
-- Feels like working with a human designer
-
-**Note:** Avoid queries with quarter filtering like "Focus on Q3 and Q4" - Claude Haiku can't filter data. Instead, show all data and let the visualization speak for itself.
+**Key points**:
+- **Instant data visualization** - no waiting for initial load
+- **Smart defaults** - automatically shows top performers
+- **Clean, modern UI** - ready for interaction
 
 ---
 
-## 🎯 **Demo 3: The Data Safety Story** (1 minute)
+### 2. **Refinement - Focus on Specific Products** (1 minute)
 
-**Goal:** Show the architecture that makes this safe for sensitive data.
-
-### **Live Demonstration:**
-
-1. **Open browser DevTools** (Network tab)
-
-2. **Ask:** "Show me revenue vs costs"
-
-3. **Point out in the network request:**
-   ```json
-   {
-     "query": "show me revenue vs costs",
-     "schema": {
-       "columns": ["quarter", "revenue", "costs", "margin"],
-       "types": ["string", "number", "number", "number"]
-     }
-     // ❌ NO RAW DATA SENT TO AI!
-   }
-   ```
-
-4. **Show the response:**
-   ```json
-   {
-     "config": {
-       "series": [{
-         "data": { "dataField": "revenue" }  // ← Just field names!
-       }]
-     },
-     "data": [1000000, 1200000, ...]  // ← Sent separately
-   }
-   ```
-
-5. **Explain:**
-   - "The AI never sees your actual numbers"
-   - "It only knows you have columns called 'revenue' and 'costs'"
-   - "The frontend injects real data after AI generates the config"
-
-**Why this works:**
-- Addresses the #1 concern: data privacy
-- Technical but easy to understand
-- Differentiates from competitors
-
----
-
-## 🎯 **Demo 4: The Business Intelligence Showcase** (3 minutes)
-
-**Goal:** Show complex analytical queries that would normally require BI tools.
-
-### **Sequence:**
-
-1. **"What's our profit margin trend?"**
-   - ✅ Calculates and visualizes margins
-   - 💡 Understands: profit margin = (revenue - costs) / revenue
-
-2. **"Show me regional performance"**
-   - ✅ Creates regional comparison chart
-   - 💡 Automatically groups by region
-
-3. **"Which region has the best margins?"**
-   - ✅ Highlights top performer
-   - 💡 Combines filtering + ranking
-
-4. **"Show me year-over-year growth"**
-   - ✅ Compares 2023 vs 2024
-   - 💡 Understands temporal comparisons
-
-5. **"Create a dashboard view of all key metrics"**
-   - ✅ Multi-metric visualization
-   - 💡 Understands "key metrics" = revenue, costs, margins
-
-**Why this works:**
-- Shows real business value
-- Replaces hours of BI tool configuration
-- Demonstrates analytical intelligence
-
----
-
-## 🎯 **Demo 5: The Speed & Cost Demo** (1 minute)
-
-**Goal:** Show the economics - fast AND cheap.
-
-### **Live Demonstration:**
-
-1. **Ask 5 rapid-fire questions:**
-   - "Show revenue trends"
-   - "Add costs"
-   - "Make it a bar chart"
-   - "Show margins"
-   - "Compare regions"
-
-2. **Point to backend terminal:**
-   ```
-   🟢 CACHED Query #2
-     💚 Cache Hit: 1,234 tokens (90% savings!)
-     💰 Cost: $0.0003
-
-   🟢 CACHED Query #3
-     💰 Cost: $0.0002
-
-   Total: $0.0015 (less than a penny for 5 charts!)
-   ```
-
-3. **Show the math:**
-   - "5 charts = $0.0015"
-   - "Your $5 credit = ~3,300 charts"
-   - "Or ~330 demo sessions like this one"
-
-4. **Compare to alternatives:**
-   - "Traditional BI: $50-500/month per user"
-   - "Custom dev: $5,000-20,000 per chart type"
-   - "Hila: Pennies per session"
-
-**Why this works:**
-- Concrete ROI
-- Shows it's production-ready, not just a demo
-- Cost is shockingly low
-
----
-
-## 🎯 **Demo 6: The "It Just Works" Moment** (2 minutes)
-
-**Goal:** Show edge cases and natural variations that would break traditional systems.
-
-### **Try These Variations:**
-
-1. **Typos & Informal Language:**
-   - "shw me revenu" → Still works!
-   - "gimme the q3 numbers" → Understands slang
-   - "what about margins tho?" → Handles casual speech
-
-2. **Ambiguous Requests:**
-   - "Show me the money" → Interprets as revenue
-   - "How are we doing?" → Creates performance overview
-   - "Is it getting better?" → Shows trends
-
-3. **Complex Combinations:**
-   - "Compare Q3 2023 vs Q3 2024 revenue and costs side by side"
-   - "Show me which quarters had margins above 20%"
-   - "Create a scatter plot of revenue vs costs colored by region"
-
-**Why this works:**
-- Shows robustness
-- Demonstrates real AI, not just keyword matching
-- Handles the messiness of real user input
-
----
-
-## 🎯 **Demo 7: The Future Vision** (1 minute)
-
-**Goal:** Show what's possible with this architecture.
-
-### **Talk Track:**
-
-"What you're seeing is just the beginning. With this architecture, we can easily add:
-
-1. **More Data Sources:**
-   - Connect to your SQL database
-   - Pull from Salesforce, Stripe, Google Analytics
-   - Real-time data streams
-
-2. **More Chart Types:**
-   - Heatmaps for correlation analysis
-   - Candlestick charts for financial data
-   - Gantt charts for project timelines
-   - Geographic maps for regional data
-
-3. **More Intelligence:**
-   - 'Why did revenue drop in Q3?' → AI explains anomalies
-   - 'Predict Q1 2025 revenue' → AI forecasting
-   - 'Show me outliers' → Automatic anomaly detection
-
-4. **More Collaboration:**
-   - Save and share visualizations
-   - Export to PowerPoint/PDF
-   - Embed in dashboards
-   - Schedule automated reports
-
-**All without writing a single line of code.**"
-
----
-
-## 🎬 **The Complete 10-Minute Demo Flow**
-
-### **Act 1: The Hook** (2 min)
-- Demo 1: Natural Language Magic
-- "This isn't just a chart tool, it's a conversation with your data"
-
-### **Act 2: The Power** (3 min)
-- Demo 2: Iterative Refinement
-- Demo 4: Business Intelligence (pick 2-3 queries)
-- "This replaces hours of BI configuration"
-
-### **Act 3: The Trust** (2 min)
-- Demo 3: Data Safety
-- "Your sensitive data never leaves your infrastructure"
-
-### **Act 4: The Economics** (1 min)
-- Demo 5: Speed & Cost
-- "Production-ready at a fraction of the cost"
-
-### **Act 5: The Vision** (2 min)
-- Demo 6: Edge Cases (pick 2-3)
-- Demo 7: Future Possibilities
-- "This is the future of business intelligence"
-
----
-
-## 💡 **Pro Tips for Maximum Impact**
-
-### **1. Start with the Wow**
-- Lead with "How did we perform in Q3?" not "Show me a line chart"
-- Let them see the magic before explaining the tech
-
-### **2. Show, Don't Tell**
-- Let the system respond before explaining
-- Silence is powerful - let the chart speak
-
-### **3. Handle Failures Gracefully**
-- If something doesn't work: "Let me rephrase that..."
-- Shows it's conversational, not brittle
-
-### **4. Customize to Your Audience**
-
-**For Executives:**
-- Focus on: Business value, ROI, time savings
-- Skip: Technical architecture (unless they ask)
-- Emphasize: "Ask questions in plain English"
-
-**For Technical Teams:**
-- Focus on: Architecture, data safety, extensibility
-- Show: DevTools, backend logs, code
-- Emphasize: "API-first, secure by design"
-
-**For Data Analysts:**
-- Focus on: Complex queries, iterative refinement
-- Show: Edge cases, data transformations
-- Emphasize: "Faster than Tableau, smarter than Excel"
-
-### **5. End with a Call to Action**
-- "What data would YOU want to visualize?"
-- "What questions do YOU ask your data?"
-- Let them try it themselves!
-
----
-
-## 🎯 **The Ultimate Demo Closer**
-
-**After showing everything, ask:**
-
-"Now imagine this connected to YOUR data:
-- Your sales pipeline
-- Your customer metrics  
-- Your financial reports
-- Your operational dashboards
-
-**How much time would this save your team?**"
-
-Then show the cost:
-- "For the price of one BI tool license ($50/month)"
-- "You could run 16,000 queries"
-- "That's 1,600 demo sessions like this"
-- "Or 50+ queries per day for a year"
-
-**"The question isn't whether you can afford this.**
-**It's whether you can afford NOT to have it."**
-
----
-
-## 📊 **Metrics to Track During Demo**
-
-Keep these visible in the backend terminal:
-
+**Query**: 
 ```
-✅ Queries: 12
-💰 Total Cost: $0.0089
-💚 Cache Savings: $0.0067
-⚡ Avg Response: 1.8 seconds
-🎯 Success Rate: 100%
+Show me just Household Products, Beverages, and Dairy Alternatives
 ```
 
-These numbers tell the story:
-- Fast (< 2 seconds)
-- Cheap (< 1 cent)
-- Reliable (100%)
-- Getting cheaper (cache savings)
+**What to say**:
+> "Let's refine this view. I'll ask Hila to focus on just three specific product categories. Notice I'm using natural language - no SQL, no configuration files."
+
+**What you'll see**:
+- Loading overlay: "Generating chart..." with spinner
+- Line chart updates to show only 3 lines
+- Same time range (all 8 quarters)
+- Legend updates to show only the 3 requested products
+- Smooth transition from previous chart
+
+**Key points**:
+- **Conversational refinement** - building on the existing view
+- **Loading feedback** - users see progress during generation
+- **Natural language filtering** - just name the products you want
 
 ---
 
-## 🚀 **Ready to Demo!**
+### 3. **Pivot - Change to Bar Chart** (1 minute)
 
-You now have:
-- ✅ 7 different demo scenarios
-- ✅ 30+ example queries
-- ✅ Multiple audience adaptations
-- ✅ A complete 10-minute flow
-- ✅ Talking points for every feature
+**Query**:
+```
+Change this to a bar chart showing just FY27-Q4 revenue for all product groups
+```
 
-**Go wow some stakeholders!** 🎉
+**What to say**:
+> "Now let's pivot our analysis. Instead of trends over time, let's compare all 18 product groups for a single quarter. I'll ask for a bar chart of the most recent quarter."
+
+**What you'll see**:
+- Loading overlay appears
+- Chart type changes from line to bar
+- X-axis: Product group names (all 18)
+- Y-axis: FY27-Q4 revenue
+- Bars sorted by value (tallest to shortest)
+- Easy visual comparison of top vs bottom performers
+
+**Key points**:
+- **Chart type switching** - from line to bar in one query
+- **Time slice** - from 8 quarters to 1 quarter
+- **Category expansion** - from 3 products to all 18
+- **Automatic sorting** - bars ordered by value for easy comparison
+
+---
+
+### 4. **New Analysis - Bubble Chart** (1.5 minutes)
+
+**Query**:
+```
+Create a bubble chart with FY26-Q1 on x-axis, FY27-Q1 on y-axis, and FY27-Q2 as bubble size
+```
+
+**What to say**:
+> "Here's where it gets powerful. Bubble charts let us see three dimensions at once. We're comparing early FY26 performance against early FY27 performance, while bubble size shows mid-FY27 revenue. This helps us spot growth patterns and outliers."
+
+**What you'll see**:
+- Loading overlay (may take a few seconds)
+- Scatter plot with bubbles of varying sizes
+- X-axis: FY26-Q1 revenue
+- Y-axis: FY27-Q1 revenue  
+- Bubble size: FY27-Q2 revenue (automatically scaled)
+- 18 bubbles (one per product group)
+- Diagonal pattern showing correlation
+- Larger bubbles indicate higher Q2 revenue
+
+**Key points**:
+- **Multi-dimensional analysis** - 3 variables in one view
+- **Automatic scaling** - bubble sizes normalized (10-60px)
+- **Correlation discovery** - visual pattern shows Q1 FY26 vs Q1 FY27 relationship
+- **Interactive tooltips** - hover shows all three values
+
+**Pro tip**: Hover over the largest bubble to show tooltip with exact values
+
+---
+
+### 5. **Pattern Discovery - Heatmap** (1 minute)
+
+**Query**:
+```
+Show me a heatmap of revenue across all quarters for the top 10 product groups
+```
+
+**What to say**:
+> "Heatmaps are excellent for spotting patterns. This grid shows us which combinations of product groups and quarters had the highest revenue. Color intensity makes it easy to see hot spots at a glance."
+
+**What you'll see**:
+- Grid layout: 10 rows (product groups) × 8 columns (quarters)
+- Color gradient: light (low revenue) to dark blue (high revenue)
+- Top 10 product groups on Y-axis
+- All 8 quarters on X-axis
+- Immediate visual patterns (seasonal trends, consistent performers)
+- Hover shows exact revenue values
+
+**Key points**:
+- **Pattern recognition** - spot trends across two dimensions
+- **Automatic filtering** - "top 10" keeps it readable
+- **Color encoding** - intensity = value magnitude
+- **Dense information** - 80 data points in one compact view
+
+---
+
+### 6. **Proportional View - Treemap** (1 minute)
+
+**Query**:
+```
+Show me a treemap of FY27-Q4 revenue by product group
+```
+
+**What to say**:
+> "Treemaps are perfect for understanding proportions. Each rectangle's size represents that product group's share of total Q4 revenue. You can immediately see which categories dominate the market."
+
+**What you'll see**:
+- Nested rectangles filling the chart area
+- Larger rectangles = higher revenue products
+- Each labeled with product group name
+- Color-coded for visual distinction
+- Proportional sizing (e.g., if Household Products is 20% of total, it takes 20% of space)
+- Hover shows exact revenue and percentage
+
+**Key points**:
+- **Part-to-whole relationships** - see market share visually
+- **Space-efficient** - all 18 groups in one view
+- **Immediate insights** - largest rectangles = biggest contributors
+- **No need for percentages** - visual sizing tells the story
+
+---
+
+### 7. **Advanced Filtering** (1 minute)
+
+**Query**:
+```
+Show me a line chart of only quarters where Household Products revenue exceeded 5 million
+```
+
+**What to say**:
+> "Hila also understands conditional filtering. I can ask it to show only data points that meet certain criteria. The AI interprets the condition and the frontend applies it."
+
+**What you'll see**:
+- Line chart for Household Products
+- Only quarters with revenue > $5M are plotted
+- Gaps in the timeline where data doesn't meet criteria
+- Clear focus on high-performance periods
+- Y-axis starts near 5M (auto-scaled)
+
+**Key points**:
+- **Natural language conditions** - "exceeded 5 million"
+- **Smart filtering** - LLM understands the logic
+- **Focused analysis** - removes noise, highlights what matters
+
+---
+
+## Demo Tips & Best Practices
+
+### Before You Start:
+1. ✅ Ensure both backend and frontend are running (`./start.sh`)
+2. ✅ Open http://localhost:3000 in a **fresh browser window**
+3. ✅ Verify ANTHROPIC_API_KEY is set in `backend/.env`
+4. ✅ Test with one simple query to confirm API is working
+
+### During the Demo:
+- **Pace yourself**: Wait for loading overlay to disappear before next query
+- **Show the loading treatment**: Point out "Generating chart..." feedback
+- **Interact with charts**: Hover over data points to trigger tooltips
+- **Toggle table view**: Click "Table" to show raw data (proves data integrity)
+- **Handle errors gracefully**: If 529 error occurs, say "API is busy, let me retry" and resubmit
+
+### Key Talking Points:
+1. **Zero configuration** - No chart libraries to learn, no config files
+2. **Conversational** - Refine, pivot, and explore naturally
+3. **Context-aware** - Each query builds on conversation history
+4. **Data-safe** - Schema goes to LLM, actual data stays secure
+5. **Real-time** - Charts generated in 2-5 seconds
+
+---
+
+## Backup Queries (If Time Permits or Questions Arise)
+
+### Combination Chart:
+```
+Show me bars for FY26-Q1 and a line for FY27-Q1 across all product groups
+```
+*Demonstrates multi-series with different chart types*
+
+### Area Chart:
+```
+Create a stacked area chart showing revenue contribution by product group over time
+```
+*Shows cumulative/proportional trends*
+
+### Scatter Plot (2D):
+```
+Show me a scatter plot comparing FY26-Q1 vs FY27-Q1 revenue
+```
+*Simpler than bubble chart, good for correlation*
+
+### Multiple Filters:
+```
+Show bar chart of FY27-Q4 revenue for product groups with "Products" in the name
+```
+*Demonstrates text matching filters*
+
+### Specific Product Deep Dive:
+```
+Show me all quarters for Beverages as a line chart with data labels
+```
+*Single product focus with enhanced labeling*
+
+---
+
+## Troubleshooting
+
+### If a chart doesn't render:
+1. Open browser console (F12) and check for errors
+2. Verify backend is running (check terminal for "🚀 Running with REAL Claude API")
+3. Refresh the page to reset conversation state
+4. Try a simpler query first
+
+### If you get a 529 error:
+- **What it means**: Anthropic API is temporarily overloaded
+- **What to do**: Wait 5-10 seconds and click "Generate" again
+- **What to say**: "The AI service is busy right now, let me retry that"
+- **Not a bug**: This is normal API rate limiting
+
+### If data looks wrong:
+- Click "Table" view to verify the underlying data
+- Check that product group names match exactly (case-sensitive)
+- Ensure quarter names are correct (e.g., "FY26-Q1" not "Q1-FY26")
+
+### If conversation gets confused:
+- Refresh the page to clear conversation history
+- Start with a clear, specific query
+- Avoid ambiguous references like "that" or "those"
+
+---
+
+## Dataset Quick Reference
+
+**Product Groups** (18 total):
+- Baby Care, Bakery Products, Baking Ingredients, Beverages
+- Breakfast Foods, Canned Goods, Condiments, Dairy Alternatives
+- Frozen Foods, Grains, Health Foods, Household Products
+- Nuts & Spreads, Personal Care, Pet Care, Snacks
+- Sweeteners
+
+**Note**: There are 2 entries for "Baking Ingredients" in the dataset (18 rows total)
+
+**Fiscal Quarters** (8 total):
+- FY26: Q1, Q2, Q3, Q4
+- FY27: Q1, Q2, Q3, Q4
+
+**Revenue Range**: ~$100K to ~$10M per product/quarter
+
+**Default Chart**: Top 5 product groups, all 8 quarters, line chart
+
+---
+
+## Closing Statement
+
+> "What you've seen is Hila's ability to transform natural language into actionable visualizations. We started with a default line chart and conversationally explored the data through refinements, pivots, and entirely new chart types. Whether you need trend analysis, comparisons, correlations, or proportional views, Hila understands your intent and generates the right visualization. This is the future of data exploration - conversational, intuitive, and powerful."
+
+**Optional add**: 
+> "And remember - your actual data never leaves your infrastructure. Only the schema is sent to the AI, keeping your sensitive information secure."
+
+---
+
+**Demo Duration**: 6-8 minutes  
+**Recommended Audience**: Product managers, data analysts, executives, technical stakeholders  
+**Prerequisites**: Basic understanding of business charts  
+**Difficulty**: Beginner-friendly

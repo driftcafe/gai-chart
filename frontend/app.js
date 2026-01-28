@@ -17,6 +17,7 @@ class HilaApp {
         this.attachEventListeners();
         this.loadDatasets();
         this.initTheme(); // Initialize theme
+        this.initColdStart(); // Load default chart on startup
     }
 
     initializeElements() {
@@ -94,6 +95,44 @@ class HilaApp {
 
         if (this.chart && this.lastChartConfig && this.lastChartData) {
             this.renderChart(this.lastChartConfig, this.lastChartData);
+        }
+    }
+
+    async initColdStart() {
+        /**
+         * Cold Start: Load default chart on page load
+         * Fetches /api/init which returns pre-configured chart + data
+         */
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/init`);
+            const result = await response.json();
+
+            if (result.success && result.config && result.data) {
+                // Store the data for future queries
+                this.currentData = result.data;
+                this.currentDataset = 'default_data'; // Set dataset to default_data
+
+                // Set conversation history from init
+                if (result.conversation_history) {
+                    this.conversationHistory = result.conversation_history;
+
+                    // Display the assistant's intro message
+                    const assistantMsg = result.conversation_history.find(m => m.role === 'assistant');
+                    if (assistantMsg) {
+                        // Clear the default welcome message first
+                        this.chatMessages.innerHTML = '';
+                        this.addMessage('assistant', assistantMsg.content);
+                    }
+                }
+
+                // Render the chart
+                this.renderChart(result.config, result.data);
+            } else {
+                console.warn('Cold start failed, showing empty state');
+            }
+        } catch (error) {
+            console.error('Cold start error:', error);
+            // Silently fail - user can still interact normally
         }
     }
 
@@ -177,8 +216,10 @@ class HilaApp {
         this.emptyState.style.display = 'none';
         this.chartContainer.style.display = 'block';
 
-        // Update chart title
-        this.chartTitle.textContent = config.title || 'Financial Chart';
+        // Helper to update title
+        if (config.title && this.chartTitle) {
+            this.chartTitle.textContent = config.title;
+        }
 
         // Initialize chart if needed
         if (!this.chart) {
@@ -194,10 +235,13 @@ class HilaApp {
         // Render chart
         this.chart.setOption(chartOption, true);
 
-        // Handle window resize
-        window.addEventListener('resize', () => {
-            this.chart.resize();
-        });
+        // Robust resize handling for flex container
+        if (!this.resizeObserver) {
+            this.resizeObserver = new ResizeObserver(() => {
+                this.chart && this.chart.resize();
+            });
+            this.resizeObserver.observe(this.chartContainer);
+        }
     }
 
     injectData(echartOption, data, dataMapping) {
@@ -208,21 +252,147 @@ class HilaApp {
          */
         const option = JSON.parse(JSON.stringify(echartOption)); // Deep clone
 
+        // Apply filters if specified in dataMapping
+        let filteredData = data;
+        if (dataMapping && dataMapping.filters) {
+            filteredData = data.filter(row => {
+                return dataMapping.filters.every(filter => {
+                    const value = row[filter.field];
+                    switch (filter.operator) {
+                        case 'equals':
+                        case '==':
+                            return value == filter.value;
+                        case 'contains':
+                            return String(value).toLowerCase().includes(String(filter.value).toLowerCase());
+                        case 'in':
+                            // Check if value is in the array
+                            return Array.isArray(filter.value) && filter.value.includes(value);
+                        case '>':
+                            return parseFloat(value) > parseFloat(filter.value);
+                        case '<':
+                            return parseFloat(value) < parseFloat(filter.value);
+                        case '>=':
+                            return parseFloat(value) >= parseFloat(filter.value);
+                        case '<=':
+                            return parseFloat(value) <= parseFloat(filter.value);
+                        default:
+                            return true;
+                    }
+                });
+            });
+        }
+
+        // Fix tooltip formatters that break multi-series charts
+        // The LLM sometimes generates formatters like "{b0}: {c0}" which only work for single series
+        if (option.tooltip && option.tooltip.formatter) {
+            // Remove restrictive formatters - let ECharts use its default multi-series tooltip
+            if (typeof option.tooltip.formatter === 'string' &&
+                (option.tooltip.formatter.includes('{b0}') || option.tooltip.formatter.includes('{c0}'))) {
+                delete option.tooltip.formatter;
+            }
+        }
+
         // Inject xAxis data
-        if (option.xAxis && option.xAxis.data && option.xAxis.data.dataField) {
-            const field = option.xAxis.data.dataField;
-            option.xAxis.data = data.map(row => row[field]);
+        if (option.xAxis) {
+            const axes = Array.isArray(option.xAxis) ? option.xAxis : [option.xAxis];
+            axes.forEach(ax => {
+                if (ax.data && ax.data.dataField) {
+                    const field = ax.data.dataField;
+                    // Handle both string (column name) and array (literal values)
+                    if (Array.isArray(field)) {
+                        // LLM provided literal values (e.g., ["FY26-Q1", "FY26-Q2", ...])
+                        ax.data = field;
+                    } else {
+                        // LLM provided a column name to look up
+                        ax.data = filteredData.map(row => row[field]);
+                    }
+                }
+                // If ax.data is already an array (hardcoded), leave it as is
+            });
         }
 
         // Inject series data
         if (option.series && Array.isArray(option.series)) {
-            option.series = option.series.map(series => {
-                if (series.data && series.data.dataField) {
-                    const field = series.data.dataField;
-                    series.data = data.map(row => row[field]);
+            // Check if we're filtering by Product Group Name (for multiple specific categories)
+            const productGroupFilter = dataMapping && dataMapping.filters &&
+                dataMapping.filters.find(f => f.field === "Product Group Name");
+
+            // For multiple specific categories (using 'in' operator), filter each series to its own data
+            if (productGroupFilter && productGroupFilter.operator === 'in' && Array.isArray(productGroupFilter.value)) {
+                // Each series should show only its own product group's data
+                option.series = option.series.map(series => {
+                    // Fix: LLM sometimes generates 'bubble' type which isn't valid in ECharts
+                    if (series.type === 'bubble') {
+                        series.type = 'scatter';
+                    }
+
+                    // Filter data to this series' product group
+                    const seriesData = filteredData.filter(row => row["Product Group Name"] === series.name);
+
+                    // Only apply generic mapping if dataField is a STRING (not an array)
+                    if (series.data && series.data.dataField && typeof series.data.dataField === 'string') {
+                        const field = series.data.dataField;
+                        series.data = seriesData.map(row => row[field]);
+                    } else if (series.data && series.data.dataField && Array.isArray(series.data.dataField)) {
+                        // Handle array of fields (for multi-column data like quarters)
+                        const fields = series.data.dataField;
+                        // For each row matching this series, extract values from all specified fields
+                        if (seriesData.length > 0) {
+                            series.data = fields.map(field => {
+                                const value = seriesData[0][field];
+                                return typeof value === 'string' ? parseFloat(value) : value;
+                            });
+                        } else {
+                            series.data = [];
+                        }
+                    }
+                    return series;
+                });
+            } else {
+                // Original logic for single category or other filter types
+                let seriesToRender = option.series;
+                if (productGroupFilter) {
+                    seriesToRender = option.series.filter(series => {
+                        if (productGroupFilter.operator === 'equals') {
+                            return series.name === productGroupFilter.value;
+                        } else if (productGroupFilter.operator === 'contains') {
+                            return series.name && series.name.toLowerCase().includes(productGroupFilter.value.toLowerCase());
+                        }
+                        return true;
+                    });
                 }
-                return series;
-            });
+
+                // Inject data into series
+                option.series = seriesToRender.map(series => {
+                    // Fix: LLM sometimes generates 'bubble' type which isn't valid in ECharts
+                    if (series.type === 'bubble') {
+                        series.type = 'scatter';
+                    }
+
+                    // Handle dataField for series data
+                    if (series.data && series.data.dataField) {
+                        const dataField = series.data.dataField;
+
+                        if (typeof dataField === 'string') {
+                            // Single column name - map from filtered data
+                            series.data = filteredData.map(row => row[dataField]);
+                        } else if (Array.isArray(dataField)) {
+                            // Array of column names (e.g., quarters) - extract values from each column
+                            // For filtered data (e.g., revenue > 5M), extract values from matching rows
+                            if (filteredData.length > 0) {
+                                series.data = dataField.map(field => {
+                                    const value = filteredData[0][field];
+                                    return typeof value === 'string' ? parseFloat(value) : value;
+                                });
+                            } else {
+                                series.data = [];
+                            }
+                        }
+                    }
+                    // If series.data is already an array (hardcoded), leave it as is
+                    return series;
+                });
+            }
         }
 
         // Handle pie charts (different data structure)
@@ -238,6 +408,84 @@ class HilaApp {
                     return item;
                 });
             }
+        }
+
+        // Handle scatter and bubble charts (multi-dimensional data points)
+        if (option.series && option.series.length > 0) {
+            const firstSeries = option.series[0];
+            if (firstSeries.type === 'scatter' || firstSeries.type === 'effectScatter') {
+                option.series = option.series.map(series => {
+                    // Handle both formats: {dataField: [...]} or [{dataField: [...]}]
+                    let dataFieldObj = series.data;
+                    if (Array.isArray(series.data) && series.data.length > 0 && series.data[0].dataField) {
+                        dataFieldObj = series.data[0];
+                    }
+
+                    if (dataFieldObj && dataFieldObj.dataField) {
+                        const fields = dataFieldObj.dataField;
+
+                        // If dataField is an array of column names [x, y] or [x, y, size]
+                        if (Array.isArray(fields)) {
+                            series.data = filteredData.map(row => {
+                                // Parse values to numbers (data comes as strings from CSV)
+                                const point = fields.map(field => {
+                                    const value = row[field];
+                                    return typeof value === 'string' ? parseFloat(value) : value;
+                                });
+                                return point;
+                            });
+
+                            // For bubble charts (3 dimensions), add symbolSize function
+                            if (fields.length === 3 && !series.symbolSize) {
+                                // Use the third dimension (size) to scale bubble size
+                                const sizeValues = series.data.map(point => point[2]);
+                                const maxSize = Math.max(...sizeValues);
+                                const minSize = Math.min(...sizeValues);
+
+                                series.symbolSize = function (data) {
+                                    // Scale between 10 and 60 pixels based on size value
+                                    const normalized = (data[2] - minSize) / (maxSize - minSize);
+                                    return 10 + normalized * 50;
+                                };
+                            }
+                        }
+                        // If dataField is a single column (fallback)
+                        else {
+                            series.data = filteredData.map((row, index) => {
+                                const value = row[fields];
+                                const numValue = typeof value === 'string' ? parseFloat(value) : value;
+                                return [index, numValue];
+                            });
+                        }
+                    }
+                    return series;
+                });
+            }
+        }
+
+        // Handle heatmap charts (requires [[x, y, value]] format)
+        if (option.series && option.series.length > 0 && option.series[0].type === 'heatmap') {
+            option.series = option.series.map(series => {
+                if (series.data && series.data.dataField) {
+                    const dataField = series.data.dataField;
+
+                    // If dataField is an array of column names (quarters)
+                    if (Array.isArray(dataField)) {
+                        // Convert to [[x, y, value]] format
+                        // x = quarter index, y = product index, value = revenue
+                        const heatmapData = [];
+                        filteredData.forEach((row, yIndex) => {
+                            dataField.forEach((field, xIndex) => {
+                                const value = row[field];
+                                const numValue = typeof value === 'string' ? parseFloat(value) : value;
+                                heatmapData.push([xIndex, yIndex, numValue || 0]);
+                            });
+                        });
+                        series.data = heatmapData;
+                    }
+                }
+                return series;
+            });
         }
 
         return option;
@@ -281,12 +529,22 @@ class HilaApp {
         option.textStyle = { fontFamily: premiumFont };
         option.color = isDark ? colorsDark : colorsLight;
 
+        // Detect if this is a bar chart with many categories (for grid spacing)
+        const isBarChart = option.series && option.series.some(s => s.type === 'bar');
+        // Handle both xAxis as array or single object
+        const xAxisData = option.xAxis ?
+            (Array.isArray(option.xAxis) ? option.xAxis[0]?.data : option.xAxis.data) : null;
+        const categoryCount = xAxisData && Array.isArray(xAxisData) ? xAxisData.length : 0;
+
+        // Detect if this is a heatmap (needs extra space for legend below X-axis)
+        const isHeatmap = option.series && option.series.length > 0 && option.series[0].type === 'heatmap';
+
         // Premium Grid (Clean, less noise)
         option.grid = {
             ...option.grid,
             top: 40,
             right: 30,
-            bottom: 30,
+            bottom: isHeatmap ? 80 : ((isBarChart && categoryCount > 8) ? 80 : 30), // Extra space for heatmap legend or rotated bar labels
             left: 50,
             containLabel: true,
             borderColor: borderColor,
@@ -313,6 +571,7 @@ class HilaApp {
         option.animationDuration = 800;
         option.animationEasing = 'cubicOut';
 
+
         // Axis Cleanup
         if (option.xAxis) {
             const axes = Array.isArray(option.xAxis) ? option.xAxis : [option.xAxis];
@@ -324,6 +583,14 @@ class HilaApp {
                     fontFamily: premiumFont,
                     margin: 12
                 };
+
+                // For bar charts with many categories, rotate labels and show all
+                if (isBarChart && categoryCount > 8) {
+                    ax.axisLabel.rotate = 45;
+                    ax.axisLabel.interval = 0; // Show all labels
+                    ax.axisLabel.margin = 16; // More space for rotated labels
+                }
+
                 ax.splitLine = { show: false };
             });
         }
@@ -356,12 +623,54 @@ class HilaApp {
             };
         }
 
+        // Heatmap-specific styling
+        if (option.series && option.series.length > 0 && option.series[0].type === 'heatmap') {
+            option.series.forEach(series => {
+                // Disable labels in cells to prevent overlap with long numbers
+                // Users will see full values in tooltips on hover
+                series.label = {
+                    show: false
+                };
+
+                // Ensure emphasis shows the value in tooltip
+                series.emphasis = {
+                    ...series.emphasis,
+                    itemStyle: {
+                        shadowBlur: 10,
+                        shadowColor: 'rgba(0, 0, 0, 0.5)'
+                    }
+                };
+            });
+
+            // Configure visualMap (color legend) to be horizontal and below the chart
+            if (option.visualMap) {
+                const visualMaps = Array.isArray(option.visualMap) ? option.visualMap : [option.visualMap];
+                visualMaps.forEach(vm => {
+                    vm.orient = 'horizontal';
+                    vm.left = 'center';
+                    vm.top = undefined; // Clear any top positioning
+                    vm.bottom = 5; // Position below X-axis labels (grid has 80px bottom margin)
+                    vm.textStyle = {
+                        color: textColor,
+                        fontFamily: premiumFont
+                    };
+                });
+                option.visualMap = visualMaps.length === 1 ? visualMaps[0] : visualMaps;
+            }
+        }
+
         return option;
     }
 
     setLoading(isLoading) {
         this.sendButton.disabled = isLoading;
         this.chatInput.disabled = isLoading;
+
+        // Show/hide chart loading overlay
+        const chartLoading = document.getElementById('chart-loading');
+        if (chartLoading) {
+            chartLoading.style.display = isLoading ? 'flex' : 'none';
+        }
 
         if (isLoading) {
             this.sendButton.innerHTML = '<span class="loading"><span class="loading-spinner"></span> Generating...</span>';

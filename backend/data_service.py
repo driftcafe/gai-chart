@@ -15,7 +15,22 @@ class DataService:
         self.datasets = {
             "quarterly_financials": self._generate_quarterly_data(),
             "monthly_metrics": self._generate_monthly_data(),
+            "default_data": self._load_default_csv(),
         }
+    
+    def _load_default_csv(self) -> List[Dict[str, Any]]:
+        """Load default_data.csv if it exists."""
+        import csv
+        import os
+        
+        try:
+            csv_path = os.path.join(os.path.dirname(__file__), "..", "default_data.csv")
+            with open(csv_path, 'r') as f:
+                reader = csv.DictReader(f)
+                return list(reader)
+        except Exception as e:
+            print(f"Warning: Could not load default_data.csv: {e}")
+            return []
     
     def _generate_quarterly_data(self) -> List[Dict[str, Any]]:
         """Generate mock quarterly financial data."""
@@ -92,8 +107,9 @@ class DataService:
             # Add metadata for categorical columns (list unique values for small sets)
             if isinstance(value, str):
                 unique_values = list(set(row[key] for row in data))
-                if len(unique_values) <= 10:  # Only for small categorical sets
-                    col_info["categories"] = unique_values
+                # Increase limit to 50, and always include for "Product Group Name"
+                if len(unique_values) <= 50 or key == "Product Group Name":
+                    col_info["categories"] = sorted(unique_values)  # Sort for consistency
             
             columns.append(col_info)
         

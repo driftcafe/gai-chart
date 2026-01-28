@@ -259,9 +259,16 @@ SUPPORTED CHART TYPES:
 - Line charts (trends over time)
 - Bar charts (comparisons)
 - Area charts (cumulative trends)
-- Scatter plots (correlations)
+- Scatter plots (correlations, 2D data points)
+- Bubble charts (3D data: x, y, and size)
 - Pie/Donut charts (proportions)
 - Combination charts (multiple series types)
+
+SPECIAL HANDLING FOR SCATTER/BUBBLE CHARTS:
+For scatter and bubble charts, each data point needs an array format:
+- Scatter: [x_value, y_value]
+- Bubble: [x_value, y_value, size_value]
+Use dataField references like: {"dataField": ["column_x", "column_y"]} or {"dataField": ["column_x", "column_y", "column_size"]}
 
 AESTHETIC GUIDELINES:
 1. Use this professional financial color palette:
@@ -284,10 +291,64 @@ Return a JSON object with this structure:
   "dataMapping": {
     "xAxis": "column_name",
     "yAxis": ["column_name1", "column_name2"],
-    "series": ["column_name1", "column_name2"]
+    "series": ["column_name1", "column_name2"],
+    "filters": [  /* OPTIONAL: Use when user wants to filter data */
+      {
+        "field": "column_name",
+        "operator": "equals|contains|>|<|>=|<=",
+        "value": "filter_value"
+      }
+    ]
   },
   "explanation": "Brief explanation of the visualization choice"
 }
+
+DATA FILTERING:
+When users ask to filter data (e.g., "show only household products", "revenue > 1000000"):
+1. Add a "filters" array to the dataMapping object
+2. Each filter has: field (column name), operator (equals/contains/>/</>=/<=), value
+3. Multiple filters are combined with AND logic
+4. The frontend will apply these filters before rendering
+5. Use "equals" for exact matches, "contains" for partial text matches
+6. For categorical columns, you will see a "categories" array in the schema - use these exact values
+
+FILTERING EXAMPLES:
+- "Show only Household Products": 
+  "filters": [{"field": "Product Group Name", "operator": "equals", "value": "Household Products"}]
+- "Revenue greater than 5 million":
+  "filters": [{"field": "FY26-Q1", "operator": ">", "value": "5000000"}]
+- "Show Bakery and Beverages":
+  "filters": [{"field": "Product Group Name", "operator": "contains", "value": "Bak"}]
+
+CRITICAL: HANDLING MULTIPLE SPECIFIC CATEGORIES:
+When users request MULTIPLE SPECIFIC categories by name (e.g., "Show me Household Products, Beverages, and Dairy Alternatives"):
+1. Create a SEPARATE SERIES for EACH category mentioned
+2. Each series must reference the SAME data columns (e.g., all quarters)
+3. Each series must have a unique name matching the category
+4. Add a filter with "in" operator containing ALL requested categories
+5. The frontend will filter the data for each series based on the series name
+
+EXAMPLE - Multiple Products:
+User: "Show me just Household Products, Beverages, and Dairy Alternatives"
+You MUST create 3 series:
+{
+  "chartType": "line",
+  "title": "Revenue Trends - Household Products, Beverages, Dairy Alternatives",
+  "echartOption": {
+    "legend": {"data": ["Household Products", "Beverages", "Dairy Alternatives"]},
+    "xAxis": {"type": "category", "data": ["FY26-Q1", "FY26-Q2", "FY26-Q3", "FY26-Q4", "FY27-Q1", "FY27-Q2", "FY27-Q3", "FY27-Q4"]},
+    "yAxis": {"type": "value"},
+    "series": [
+      {"name": "Household Products", "type": "line", "data": {"dataField": ["FY26-Q1", "FY26-Q2", "FY26-Q3", "FY26-Q4", "FY27-Q1", "FY27-Q2", "FY27-Q3", "FY27-Q4"]}},
+      {"name": "Beverages", "type": "line", "data": {"dataField": ["FY26-Q1", "FY26-Q2", "FY26-Q3", "FY26-Q4", "FY27-Q1", "FY27-Q2", "FY27-Q3", "FY27-Q4"]}},
+      {"name": "Dairy Alternatives", "type": "line", "data": {"dataField": ["FY26-Q1", "FY26-Q2", "FY26-Q3", "FY26-Q4", "FY27-Q1", "FY27-Q2", "FY27-Q3", "FY27-Q4"]}}
+    ]
+  },
+  "dataMapping": {
+    "filters": [{"field": "Product Group Name", "operator": "in", "value": ["Household Products", "Beverages", "Dairy Alternatives"]}]
+  }
+}
+
 
 EXAMPLE (for schema with columns: quarter, revenue, costs):
 {
@@ -358,9 +419,16 @@ SUPPORTED CHART TYPES:
 - Line charts (trends over time)
 - Bar charts (comparisons)
 - Area charts (cumulative trends)
-- Scatter plots (correlations)
+- Scatter plots (correlations, 2D data points)
+- Bubble charts (3D data: x, y, and size)
 - Pie/Donut charts (proportions)
 - Combination charts (multiple series types)
+
+SPECIAL HANDLING FOR SCATTER/BUBBLE CHARTS:
+For scatter and bubble charts, each data point needs an array format:
+- Scatter: [x_value, y_value]
+- Bubble: [x_value, y_value, size_value]
+Use dataField references like: {"dataField": ["column_x", "column_y"]} or {"dataField": ["column_x", "column_y", "column_size"]}
 
 AESTHETIC GUIDELINES:
 1. Use this professional financial color palette:
@@ -383,10 +451,64 @@ Return a JSON object with this structure:
   "dataMapping": {
     "xAxis": "column_name",
     "yAxis": ["column_name1", "column_name2"],
-    "series": ["column_name1", "column_name2"]
+    "series": ["column_name1", "column_name2"],
+    "filters": [  /* OPTIONAL: Use when user wants to filter data */
+      {
+        "field": "column_name",
+        "operator": "equals|contains|>|<|>=|<=",
+        "value": "filter_value"
+      }
+    ]
   },
   "explanation": "Brief explanation of the visualization choice"
 }
+
+DATA FILTERING:
+When users ask to filter data (e.g., "show only household products", "revenue > 1000000"):
+1. Add a "filters" array to the dataMapping object
+2. Each filter has: field (column name), operator (equals/contains/>/</>=/<=), value
+3. Multiple filters are combined with AND logic
+4. The frontend will apply these filters before rendering
+5. Use "equals" for exact matches, "contains" for partial text matches
+6. For categorical columns, you will see a "categories" array in the schema - use these exact values
+
+FILTERING EXAMPLES:
+- "Show only Household Products": 
+  "filters": [{"field": "Product Group Name", "operator": "equals", "value": "Household Products"}]
+- "Revenue greater than 5 million":
+  "filters": [{"field": "FY26-Q1", "operator": ">", "value": "5000000"}]
+- "Show Bakery and Beverages":
+  "filters": [{"field": "Product Group Name", "operator": "contains", "value": "Bak"}]
+
+CRITICAL: HANDLING MULTIPLE SPECIFIC CATEGORIES:
+When users request MULTIPLE SPECIFIC categories by name (e.g., "Show me Household Products, Beverages, and Dairy Alternatives"):
+1. Create a SEPARATE SERIES for EACH category mentioned
+2. Each series must reference the SAME data columns (e.g., all quarters)
+3. Each series must have a unique name matching the category
+4. Add a filter with "in" operator containing ALL requested categories
+5. The frontend will filter the data for each series based on the series name
+
+EXAMPLE - Multiple Products:
+User: "Show me just Household Products, Beverages, and Dairy Alternatives"
+You MUST create 3 series:
+{
+  "chartType": "line",
+  "title": "Revenue Trends - Household Products, Beverages, Dairy Alternatives",
+  "echartOption": {
+    "legend": {"data": ["Household Products", "Beverages", "Dairy Alternatives"]},
+    "xAxis": {"type": "category", "data": ["FY26-Q1", "FY26-Q2", "FY26-Q3", "FY26-Q4", "FY27-Q1", "FY27-Q2", "FY27-Q3", "FY27-Q4"]},
+    "yAxis": {"type": "value"},
+    "series": [
+      {"name": "Household Products", "type": "line", "data": {"dataField": ["FY26-Q1", "FY26-Q2", "FY26-Q3", "FY26-Q4", "FY27-Q1", "FY27-Q2", "FY27-Q3", "FY27-Q4"]}},
+      {"name": "Beverages", "type": "line", "data": {"dataField": ["FY26-Q1", "FY26-Q2", "FY26-Q3", "FY26-Q4", "FY27-Q1", "FY27-Q2", "FY27-Q3", "FY27-Q4"]}},
+      {"name": "Dairy Alternatives", "type": "line", "data": {"dataField": ["FY26-Q1", "FY26-Q2", "FY26-Q3", "FY26-Q4", "FY27-Q1", "FY27-Q2", "FY27-Q3", "FY27-Q4"]}}
+    ]
+  },
+  "dataMapping": {
+    "filters": [{"field": "Product Group Name", "operator": "in", "value": ["Household Products", "Beverages", "Dairy Alternatives"]}]
+  }
+}
+
 
 EXAMPLE (for schema with columns: quarter, revenue, costs):
 {
