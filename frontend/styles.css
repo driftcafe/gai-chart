@@ -312,6 +312,52 @@ body {
   background: transparent;
 }
 
+/* Context Chip (Drill Down) */
+.context-chip-container {
+  display: flex;
+  margin-bottom: 8px;
+  padding: 0 4px;
+}
+
+.context-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #E6EDFD;
+  color: #007AFF;
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  animation: fadeIn 0.2s ease;
+}
+
+.context-chip .remove-btn {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  opacity: 0.6;
+}
+
+.context-chip .remove-btn:hover {
+  opacity: 1;
+}
+
+/* Clickable History Messages */
+.message.clickable {
+  cursor: pointer;
+  transition: transform 0.1s, opacity 0.2s;
+}
+
+.message.clickable:hover .message-content {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.message.clickable.active .message-content {
+  border: 2px solid var(--color-primary);
+}
+
 .input-wrapper {
   display: flex;
   height: 60px;

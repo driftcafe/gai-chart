@@ -13,6 +13,10 @@ class HilaApp {
         this.currentDataset = 'quarterly_financials';
         this.currentData = null;
 
+        // Interactive History & Drill-down state
+        this.chartHistory = []; // Stores { config, data, timestamp }
+        this.selectedContext = null; // Stores { name, value, series }
+
         this.initializeElements();
         this.attachEventListeners();
         this.loadDatasets();
@@ -30,7 +34,8 @@ class HilaApp {
         this.chartContainer = document.getElementById('chart-container');
         this.chartTitle = document.getElementById('chart-title');
         this.errorContainer = document.getElementById('error-container');
-        this.themeToggle = document.getElementById('theme-toggle'); // New theme toggle element
+        this.themeToggle = document.getElementById('theme-toggle');
+        this.contextChipContainer = document.getElementById('context-chip-container'); // New context chip container
 
         // Save the original icon HTML (SVG)
         if (this.sendButton) {
@@ -149,18 +154,24 @@ class HilaApp {
         this.addMessage('user', query);
         this.chatInput.value = '';
 
-        // Show loading state
         this.setLoading(true);
         this.clearError();
 
         try {
+            // Apply Context (Feature 1)
+            // If user selected a data point, append it to the prompt so LLM knows context
+            let finalQuery = query;
+            if (this.selectedContext) {
+                finalQuery += ` (Context: Selected "${this.selectedContext.name}" with value ${this.selectedContext.value})`;
+            }
+
             const response = await fetch(`${API_BASE_URL}/api/generate-chart`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    query: query,
+                    query: finalQuery,
                     dataset: this.currentDataset,
                     conversation_history: this.conversationHistory
                 })
@@ -212,10 +223,36 @@ class HilaApp {
         this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
     }
 
-    renderChart(config, data) {
+    renderChart(config, data, fromHistory = false) {
         // Save state for theme toggling
         this.lastChartConfig = config;
         this.lastChartData = data;
+
+        // History Management (Time Travel)
+        // Only push to history if this is a NEW render, not a restoration
+        if (!fromHistory) {
+            this.chartHistory.push({
+                config: JSON.parse(JSON.stringify(config)), // Deep copy to freeze state
+                data: JSON.parse(JSON.stringify(data)),
+                timestamp: new Date()
+            });
+
+            // Mark the latest user message as clickable and link to this history item
+            const historyIndex = this.chartHistory.length - 1;
+            const userMessages = this.chatMessages.querySelectorAll('.message.user');
+            if (userMessages.length > 0) {
+                const lastUserMsg = userMessages[userMessages.length - 1];
+                // Only attach if not already attached
+                if (!lastUserMsg.dataset.historyIndex) {
+                    lastUserMsg.classList.add('clickable');
+                    lastUserMsg.dataset.historyIndex = historyIndex;
+                    lastUserMsg.onclick = () => this.restoreHistoryState(historyIndex);
+                    // Add active class to show it's currently selected
+                    this.clearActiveMessages();
+                    lastUserMsg.classList.add('active');
+                }
+            }
+        }
 
         // Hide empty state, show chart
         this.emptyState.style.display = 'none';
@@ -229,6 +266,9 @@ class HilaApp {
         // Initialize chart if needed
         if (!this.chart) {
             this.chart = echarts.init(this.chartElement);
+
+            // Feature 1: Click-to-Context (Drill Down)
+            this.chart.on('click', (params) => this.handleChartClick(params));
         }
 
         // Inject data into configuration
@@ -246,6 +286,78 @@ class HilaApp {
                 this.chart && this.chart.resize();
             });
             this.resizeObserver.observe(this.chartContainer);
+        }
+    }
+
+    handleChartClick(params) {
+        // console.log('Chart clicked:', params);
+
+        if (params && params.name) {
+            // Store selected context
+            this.selectedContext = {
+                name: params.name,
+                value: Array.isArray(params.value) ? params.value[params.value.length - 1] : params.value,
+                seriesName: params.seriesName
+            };
+
+            // Update UI
+            this.updateContextChip();
+
+            // Optional: visual feedback in chart (e.g., dispatchAction to highlight)
+            // For now, the chip is sufficient feedback
+        }
+    }
+
+    updateContextChip() {
+        if (!this.contextChipContainer) return;
+
+        if (this.selectedContext) {
+            this.contextChipContainer.style.display = 'flex';
+            this.contextChipContainer.innerHTML = `
+                <div class="context-chip">
+                    <span>Selected: ${this.selectedContext.name}</span>
+                    <div class="remove-btn" onclick="hilaApp.clearContext()">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </div>
+                </div>
+            `;
+        } else {
+            this.contextChipContainer.style.display = 'none';
+            this.contextChipContainer.innerHTML = '';
+        }
+    }
+
+    clearContext() {
+        this.selectedContext = null;
+        this.updateContextChip();
+    }
+
+    clearActiveMessages() {
+        const activeMsgs = this.chatMessages.querySelectorAll('.message.active');
+        activeMsgs.forEach(msg => msg.classList.remove('active'));
+    }
+
+    restoreHistoryState(index) {
+        if (index >= 0 && index < this.chartHistory.length) {
+            const historyItem = this.chartHistory[index];
+            console.log('Restoring history state:', index);
+
+            // Reset selection when rolling back (Constraint)
+            this.clearContext();
+
+            // Render without pushing to history again
+            this.renderChart(historyItem.config, historyItem.data, true);
+
+            // Update active state in UI
+            this.clearActiveMessages();
+            // Find the message with this index
+            const message = this.chatMessages.querySelector(`.message.user[data-history-index="${index}"]`);
+            if (message) {
+                message.classList.add('active');
+            }
         }
     }
 
