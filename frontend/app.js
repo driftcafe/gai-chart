@@ -31,6 +31,11 @@ class HilaApp {
         this.chartTitle = document.getElementById('chart-title');
         this.errorContainer = document.getElementById('error-container');
         this.themeToggle = document.getElementById('theme-toggle'); // New theme toggle element
+
+        // Save the original icon HTML (SVG)
+        if (this.sendButton) {
+            this.sendButtonIconHTML = this.sendButton.innerHTML;
+        }
     }
 
     attachEventListeners() {
@@ -678,9 +683,9 @@ class HilaApp {
         }
 
         if (isLoading) {
-            this.sendButton.innerHTML = '<span class="loading"><span class="loading-spinner"></span> Generating...</span>';
+            this.sendButton.innerHTML = '<div class="loading-spinner-small"></div>';
         } else {
-            this.sendButton.innerHTML = 'Generate';
+            this.sendButton.innerHTML = this.sendButtonIconHTML || 'Generate';
         }
     }
 
