@@ -4,6 +4,15 @@
  * injects actual data on the frontend.
  */
 
+const CHART_ICONS = {
+    bar: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M16 19.5V13.5963H19.5V19.5H16ZM10.25 19.5V4.5H13.75V19.5H10.25ZM4.5 19.5V9.404H8V19.5H4.5Z" fill="currentColor"/></svg>`,
+    line: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3.50002 18.1538L2.38477 17.0385L9.53852 9.88477L13.5385 13.8848L20.5808 5.88477L21.6345 6.91927L13.5578 16.1345L9.53852 12.1153L3.50002 18.1538Z" fill="currentColor"/></svg>`,
+    scatter: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14.406 20.5C13.6802 20.5 13.0625 20.2459 12.553 19.7378C12.0433 19.2298 11.7885 18.6127 11.7885 17.8867C11.7885 17.1609 12.0426 16.5433 12.5507 16.0338C13.0587 15.5241 13.6757 15.2692 14.4015 15.2692C15.1273 15.2692 15.7451 15.5233 16.2548 16.0315C16.7644 16.5395 17.0193 17.1564 17.0193 17.8822C17.0193 18.6082 16.7652 19.226 16.257 19.7355C15.749 20.2452 15.132 20.5 14.406 20.5ZM14.4038 19C14.7128 19 14.9759 18.8913 15.1932 18.674C15.4106 18.4567 15.5193 18.1935 15.5193 17.8845C15.5193 17.5757 15.4106 17.3126 15.1932 17.0953C14.9759 16.8779 14.7128 16.7693 14.4038 16.7693C14.0948 16.7693 13.8317 16.8779 13.6145 17.0953C13.3972 17.3126 13.2885 17.5757 13.2885 17.8845C13.2885 18.1935 13.3972 18.4567 13.6145 18.674C13.8317 18.8913 14.0948 19 14.4038 19ZM16.5 13.5C15.1013 13.5 13.9183 13.0163 12.951 12.049C11.9837 11.0817 11.5 9.89867 11.5 8.5C11.5 7.10133 11.9837 5.91833 12.951 4.951C13.9183 3.98367 15.1013 3.5 16.5 3.5C17.8987 3.5 19.0817 3.98367 20.049 4.951C21.0163 5.91833 21.5 7.10133 21.5 8.5C21.5 9.89867 21.0163 11.0817 20.049 12.049C19.0817 13.0163 17.8987 13.5 16.5 13.5ZM16.5 12C17.4833 12 18.3125 11.6625 18.9875 10.9875C19.6625 10.3125 20 9.48333 20 8.5C20 7.51667 19.6625 6.6875 18.9875 6.0125C18.3125 5.3375 17.4833 5 16.5 5C15.5167 5 14.6875 5.3375 14.0125 6.0125C13.3375 6.6875 13 7.51667 13 8.5C13 9.48333 13.3375 10.3125 14.0125 10.9875C14.6875 11.6625 15.5167 12 16.5 12ZM7.1155 17.6152C6.12117 17.6152 5.27 17.2613 4.562 16.5533C3.854 15.8453 3.5 14.9942 3.5 14C3.5 13.0058 3.854 12.1548 4.562 11.4468C5.27 10.7388 6.12117 10.3848 7.1155 10.3848C8.10967 10.3848 8.96075 10.7388 9.66875 11.4468C10.3768 12.1548 10.7308 13.0058 10.7308 14C10.7308 14.9942 10.3768 15.8453 9.66875 16.5533C8.96075 17.2613 8.10967 17.6152 7.1155 17.6152ZM7.11575 16.1155C7.69758 16.1155 8.19558 15.9083 8.60975 15.494C9.02375 15.0797 9.23075 14.5816 9.23075 13.9998C9.23075 13.4179 9.02358 12.9199 8.60925 12.5058C8.19492 12.0916 7.69683 11.8845 7.115 11.8845C6.53317 11.8845 6.03525 12.0917 5.62125 12.506C5.20708 12.9203 5 13.4184 5 14.0003C5 14.5821 5.20717 15.0801 5.6215 15.4943C6.03583 15.9084 6.53392 16.1155 7.11575 16.1155Z" fill="currentColor"/></svg>`,
+    heatmap: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3.5 20.5V19H6V20.5H3.5ZM3.5 16.625V15.125H10.8365V16.625H3.5ZM3.5 12.75V11.25H20.5V12.75H3.5ZM3.5 8.875V7.375H10.8365V8.875H3.5ZM3.5 5V3.5H6V5H3.5ZM8.3365 20.5V19H10.8365V20.5H8.3365ZM8.3365 5V3.5H10.8365V5H8.3365ZM13.1635 20.5V19H15.6635V20.5H13.1635ZM13.1635 16.625V15.125H20.5V16.625H13.1635ZM13.1635 8.875V7.375H20.5V8.875H13.1635ZM13.1635 5V3.5H15.6635V5H13.1635ZM18 20.5V19H20.5V20.5H18ZM18 5V3.5H20.5V5H18Z" fill="currentColor"/></svg>`,
+    boxplot: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.5 19.5V17.5H5.5V6.5H7.5V4.5H9V6.5H11V17.5H9V19.5H7.5ZM7 16H9.5V8H7V16ZM15 19.5V14.6923H13V8.404H15V4.5H16.5V8.404H18.5V14.6923H16.5V19.5H15ZM14.5 13.1923H17V9.90375H14.5V13.1923Z" fill="currentColor"/></svg>`,
+    treemap: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6.15375 17.8462H11.423V14.077H6.15375V17.8462ZM6.15375 12.923H11.423V6.15375H6.15375V12.923ZM12.577 17.8462H17.8462V11.077H12.577V17.8462ZM12.577 9.923H17.8462V6.15375H12.577V9.923ZM5.30775 20.5C4.80258 20.5 4.375 20.325 4.025 19.975C3.675 19.625 3.5 19.1974 3.5 18.6923V5.30775C3.5 4.80258 3.675 4.375 4.025 4.025C4.375 3.675 4.80258 3.5 5.30775 3.5H18.6923C19.1974 3.5 19.625 3.675 19.975 4.025C20.325 4.375 20.5 4.80258 20.5 5.30775V7.38475H22.2693V8.8845H20.5V11.25H22.2693V12.75H20.5V15.1155H22.2693V16.6152H20.5V18.6923C20.5 19.1974 20.325 19.625 19.975 19.975C19.625 20.325 19.1974 20.5 18.6923 20.5H5.30775ZM5.30775 19H18.6923C18.7693 19 18.8398 18.9679 18.9038 18.9038C18.9679 18.8398 19 18.7693 19 18.6923V5.30775C19 5.23075 18.9679 5.16025 18.9038 5.09625C18.8398 5.03208 18.7693 5 18.6923 5H5.30775C5.23075 5 5.16025 5.03208 5.09625 5.09625C5.03208 5.16025 5 5.23075 5 5.30775V18.6923C5 18.7693 5.03208 18.8398 5.09625 18.9038C5.16025 18.9679 5.23075 19 5.30775 19Z" fill="currentColor"/></svg>`
+};
+
 const API_BASE_URL = 'http://localhost:8000';
 
 class HilaApp {
@@ -104,7 +113,7 @@ class HilaApp {
         }
 
         if (this.chart && this.lastChartConfig && this.lastChartData) {
-            this.renderChart(this.lastChartConfig, this.lastChartData);
+            this.renderChart(this.lastChartConfig, this.lastChartData, true);
         }
     }
 
@@ -131,12 +140,32 @@ class HilaApp {
                     if (assistantMsg) {
                         // Clear the default welcome message first
                         this.chatMessages.innerHTML = '';
-                        this.addMessage('assistant', assistantMsg.content);
+
+                        // Extract chart type if possible
+                        let chartType = null;
+                        if (result.config.echartOption && result.config.echartOption.series && result.config.echartOption.series[0]) {
+                            chartType = result.config.echartOption.series[0].type;
+                        }
+
+                        this.addMessage('assistant', assistantMsg.content, chartType);
                     }
                 }
 
-                // Render the chart
+                // Render the chart (this will push to history index 0)
                 this.renderChart(result.config, result.data);
+
+                // Make the assistant's first message clickable to restore initial state
+                // This allows stepping back to the very first chart
+                if (this.chartHistory.length > 0) {
+                    const assistantMessages = this.chatMessages.querySelectorAll('.message.assistant');
+                    if (assistantMessages.length > 0) {
+                        const firstMsg = assistantMessages[0];
+                        firstMsg.classList.add('clickable');
+                        firstMsg.dataset.historyIndex = 0; // The initial chart is index 0
+                        firstMsg.onclick = () => this.restoreHistoryState(0);
+                        firstMsg.classList.add('active'); // Initially active
+                    }
+                }
             } else {
                 console.warn('Cold start failed, showing empty state');
             }
@@ -186,8 +215,14 @@ class HilaApp {
                 // Store data
                 this.currentData = result.data;
 
-                // Add assistant message
-                this.addMessage('assistant', result.config.explanation || 'Chart generated successfully');
+                // Determine chart type for icon
+                let chartType = null;
+                if (result.config && result.config.echartOption && result.config.echartOption.series && result.config.echartOption.series.length > 0) {
+                    chartType = result.config.echartOption.series[0].type;
+                }
+
+                // Add assistant message with chart icon
+                this.addMessage('assistant', result.config.explanation || 'Chart generated successfully', chartType);
 
                 // Render chart with data injection
                 this.renderChart(result.config, result.data);
@@ -204,7 +239,7 @@ class HilaApp {
         }
     }
 
-    addMessage(role, content) {
+    addMessage(role, content, chartType = null) {
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${role}`;
 
@@ -214,7 +249,34 @@ class HilaApp {
 
         const contentDiv = document.createElement('div');
         contentDiv.className = 'message-content';
-        contentDiv.textContent = content;
+
+        // If it's an assistant message with a chart type, add the icon
+        if (role === 'assistant' && chartType) {
+            // Map echart type to icon key
+            let iconKey = chartType;
+            if (chartType === 'effectScatter') iconKey = 'scatter';
+            if (!CHART_ICONS[iconKey]) {
+                // Try reasonable fallbacks or defaults
+                if (chartType === 'scatter') iconKey = 'scatter';
+                else iconKey = 'bar'; // Default fallback
+            }
+
+            // Allow checking specific chart types if needed (e.g. boxplot might come as 'boxplot' or custom)
+            // ECharts uses 'boxplot', 'heatmap', 'treemap' which match our keys.
+            // Check if we have an icon for this type
+            const iconSvg = CHART_ICONS[iconKey] || CHART_ICONS['bar'];
+
+            contentDiv.innerHTML = `
+                <div class="message-flex">
+                    <div class="chart-icon-box">
+                        ${iconSvg}
+                    </div>
+                    <div class="message-text">${content}</div>
+                </div>
+            `;
+        } else {
+            contentDiv.textContent = content;
+        }
 
         messageDiv.appendChild(labelDiv);
         messageDiv.appendChild(contentDiv);
@@ -237,19 +299,19 @@ class HilaApp {
                 timestamp: new Date()
             });
 
-            // Mark the latest user message as clickable and link to this history item
+            // Mark the latest assistant message as clickable and link to this history item
             const historyIndex = this.chartHistory.length - 1;
-            const userMessages = this.chatMessages.querySelectorAll('.message.user');
-            if (userMessages.length > 0) {
-                const lastUserMsg = userMessages[userMessages.length - 1];
+            const assistantMessages = this.chatMessages.querySelectorAll('.message.assistant');
+            if (assistantMessages.length > 0) {
+                const lastAssistantMsg = assistantMessages[assistantMessages.length - 1];
                 // Only attach if not already attached
-                if (!lastUserMsg.dataset.historyIndex) {
-                    lastUserMsg.classList.add('clickable');
-                    lastUserMsg.dataset.historyIndex = historyIndex;
-                    lastUserMsg.onclick = () => this.restoreHistoryState(historyIndex);
+                if (!lastAssistantMsg.dataset.historyIndex) {
+                    lastAssistantMsg.classList.add('clickable');
+                    lastAssistantMsg.dataset.historyIndex = historyIndex;
+                    lastAssistantMsg.onclick = () => this.restoreHistoryState(historyIndex);
                     // Add active class to show it's currently selected
                     this.clearActiveMessages();
-                    lastUserMsg.classList.add('active');
+                    lastAssistantMsg.classList.add('active');
                 }
             }
         }
@@ -353,8 +415,8 @@ class HilaApp {
 
             // Update active state in UI
             this.clearActiveMessages();
-            // Find the message with this index
-            const message = this.chatMessages.querySelector(`.message.user[data-history-index="${index}"]`);
+            // Find the message with this index (could be user or assistant/initial)
+            const message = this.chatMessages.querySelector(`.message[data-history-index="${index}"]`);
             if (message) {
                 message.classList.add('active');
             }
@@ -520,7 +582,7 @@ class HilaApp {
                         }
 
                         // Skip multi-dimensional charts here - they are handled in dedicated blocks below
-                        if (series.type === 'scatter' || series.type === 'effectScatter' || series.type === 'heatmap') {
+                        if (series.type === 'scatter' || series.type === 'effectScatter' || series.type === 'heatmap' || series.type === 'boxplot') {
                             return series;
                         }
 
@@ -685,6 +747,75 @@ class HilaApp {
                 });
             }
 
+            // Handle boxplot charts
+            if (option.series && option.series.some(s => s.type === 'boxplot')) {
+                // 1. Identify category field from xAxis
+                let categoryField = null;
+                if (option.xAxis && !Array.isArray(option.xAxis)) {
+                    if (option.xAxis.data && option.xAxis.data.dataField) {
+                        categoryField = option.xAxis.data.dataField;
+                    }
+                } else if (option.xAxis && Array.isArray(option.xAxis) && option.xAxis.length > 0) {
+                    if (option.xAxis[0].data && option.xAxis[0].data.dataField) {
+                        categoryField = option.xAxis[0].data.dataField;
+                    }
+                }
+
+                if (categoryField) {
+                    // Scenario A: Row-based grouping (e.g. Salary by Department)
+                    // 2. Get unique categories
+                    const categories = [...new Set(filteredData.map(row => row[categoryField]))].sort();
+
+                    // Update xAxis to show unique categories
+                    const xAxisObj = Array.isArray(option.xAxis) ? option.xAxis[0] : option.xAxis;
+                    xAxisObj.data = categories;
+
+                    // 3. Process each series
+                    option.series.forEach(series => {
+                        if (series.type === 'boxplot' && series.data && series.data.dataField) {
+                            const valueField = series.data.dataField;
+
+                            // Group data by category
+                            const boxData = categories.map(cat => {
+                                // Find all values for this category
+                                const values = filteredData
+                                    .filter(row => row[categoryField] === cat)
+                                    .map(row => {
+                                        const val = row[valueField];
+                                        return typeof val === 'string' ? parseFloat(val) : val;
+                                    })
+                                    .filter(v => !isNaN(v)); // Filter out invalid
+
+                                // Compute stats
+                                return this.calculateBoxplotStats(values);
+                            });
+
+                            series.data = boxData;
+                        }
+                    });
+                } else {
+                    // Scenario B: Column-based grouping (e.g. Revenue by Quarter)
+                    // Check if series has array of fields
+                    option.series.forEach(series => {
+                        if (series.type === 'boxplot' && series.data && Array.isArray(series.data.dataField)) {
+                            const fields = series.data.dataField;
+
+                            // For each field (column), get all values
+                            const boxData = fields.map(field => {
+                                const values = filteredData.map(row => {
+                                    const val = row[field];
+                                    return typeof val === 'string' ? parseFloat(val) : val;
+                                }).filter(v => !isNaN(v));
+
+                                return this.calculateBoxplotStats(values);
+                            });
+
+                            series.data = boxData;
+                        }
+                    });
+                }
+            }
+
             return option;
         } catch (error) {
             console.error('Error injecting data into chart config:', error);
@@ -694,6 +825,31 @@ class HilaApp {
             // Fallback: return original option and let ECharts handle it
             // This prevents complete chart failure
             return echartOption;
+        }
+    }
+
+    calculateBoxplotStats(values) {
+        if (values.length === 0) return [0, 0, 0, 0, 0];
+
+        values.sort((a, b) => a - b);
+
+        const q1 = this.getQuantile(values, 0.25);
+        const median = this.getQuantile(values, 0.5);
+        const q3 = this.getQuantile(values, 0.75);
+        const min = values[0];
+        const max = values[values.length - 1];
+
+        return [min, q1, median, q3, max];
+    }
+
+    getQuantile(sorted, q) {
+        const pos = (sorted.length - 1) * q;
+        const base = Math.floor(pos);
+        const rest = pos - base;
+        if (sorted[base + 1] !== undefined) {
+            return sorted[base] + rest * (sorted[base + 1] - sorted[base]);
+        } else {
+            return sorted[base];
         }
     }
 

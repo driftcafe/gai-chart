@@ -292,8 +292,14 @@ body {
 }
 
 .message.user .message-content {
-  background: #2D2D2D;
+  background: #6B6B6B;
   color: white;
+}
+
+.message.user.active .message-content,
+.message.clickable.active .message-content {
+  background: #2D2D2D;
+  border: none;
 }
 
 .message.assistant {
@@ -350,12 +356,54 @@ body {
 }
 
 .message.clickable:hover .message-content {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transform: translateY(-1px);
+  background: #E5E5EA;
+  /* Slightly darker grey */
+  transform: none;
+  box-shadow: none;
 }
 
-.message.clickable.active .message-content {
-  border: 2px solid var(--color-primary);
+.message.clickable.active:hover .message-content {
+  background: var(--color-bg-subtle);
+  /* No hover effect on active */
+}
+
+.message.assistant.active .message-content {
+  border: 1px solid var(--color-primary);
+  background: var(--color-bg-subtle);
+  /* Keep default light grey */
+  box-shadow: none;
+}
+
+/* Assistant Message Internal Layout */
+.message-flex {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.chart-icon-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  /* Prevent shrinking */
+  border-radius: 8px;
+  background-color: transparent;
+  /* Unselected state: Transparent */
+  color: #1C1B1F;
+}
+
+/* Selected state: Transparent background, Blue icon */
+.message.assistant.active .chart-icon-box {
+  background-color: transparent;
+  color: var(--color-primary);
+}
+
+.message-text {
+  flex: 1;
+  padding-top: 6px;
 }
 
 .input-wrapper {

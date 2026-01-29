@@ -262,7 +262,13 @@ SUPPORTED CHART TYPES:
 - Scatter plots (correlations, 2D data points)
 - Bubble charts (3D data: x, y, and size)
 - Pie/Donut charts (proportions)
+- Boxplot charts (distributions, statistical summary)
 - Combination charts (multiple series types)
+
+SPECIAL HANDLING FOR BOXPLOTS:
+1. Set series type to 'boxplot'
+2. Do NOT attempt to calculate quartiles/stats. The frontend will process raw data.
+3. Just map the category column to xAxis and value column to series dataField.
 
 SPECIAL HANDLING FOR SCATTER/BUBBLE CHARTS:
 For scatter and bubble charts, each data point needs an array format:
@@ -442,6 +448,21 @@ AESTHETIC GUIDELINES:
 4. Enable interactive features: zoom, tooltip, legend toggle
 5. Responsive sizing
 
+SUPPORTED CHART TYPES:
+- Line charts (trends over time)
+- Bar charts (comparisons)
+- Area charts (cumulative trends)
+- Scatter plots (correlations, 2D data points)
+- Bubble charts (3D data: x, y, and size)
+- Pie/Donut charts (proportions)
+- Boxplot charts (distributions, statistical summary)
+- Combination charts (multiple series types)
+
+SPECIAL HANDLING FOR BOXPLOTS:
+1. Set series type to 'boxplot'
+2. Do NOT attempt to calculate quartiles/stats. The frontend will process raw data.
+3. Just map the category column to xAxis and value column to series dataField.
+
 OUTPUT FORMAT:
 Return a JSON object with this structure:
 {
@@ -586,7 +607,8 @@ Generate an appropriate ECharts configuration for this request."""
                 text = text[start:end]
         
         # Remove JavaScript-style comments (// and /* */)
-        text = re.sub(r'//.*?$', '', text, flags=re.MULTILINE)
+        # Use safer regex for // to avoid breaking URLs in strings (only match full line comments)
+        text = re.sub(r'^\s*//.*$', '', text, flags=re.MULTILINE)
         text = re.sub(r'/\*.*?\*/', '', text, flags=re.DOTALL)
         
         # Remove JavaScript function definitions (common LLM mistake)
