@@ -418,6 +418,81 @@ body {
   background: var(--hE-Sys-surface-container-primary, #FFF);
 }
 
+/* Table Styles */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+}
+
+.data-table thead {
+  background-color: #F8F9FA;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.data-table th {
+  text-align: left;
+  padding: 12px 16px;
+  font-weight: 500;
+  color: #4B5563;
+  /* Header text color */
+  border-bottom: 1px solid #E5E7EB;
+  white-space: nowrap;
+}
+
+.data-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #F3F4F6;
+  color: #111827;
+  /* Body name text */
+}
+
+/* currency badge style */
+.currency-badge {
+  background-color: #F3F4F6;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 12px;
+  color: #4B5563;
+  font-weight: 500;
+}
+
+/* positive change badge */
+.badge-positive {
+  background-color: #D1FAE5;
+  color: #065F46;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* negative change badge */
+.badge-negative {
+  background-color: #F3E8FF;
+  /* Purple tint from screenshot */
+  color: #7E22CE;
+  /* Purple text */
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.cell-negative {
+  color: #A855F7;
+  /* Purple text for negative values */
+}
+
+.data-table tr:hover {
+  background-color: #F9FAFB;
+}
+
+/* Row styling */
+.data-table tr td:first-child {
+  font-weight: 600;
+  /* ID column bold */
+}
+
 .input-wrapper:focus-within {
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);

@@ -63,6 +63,91 @@ class HilaApp {
         this.datasetSelect.addEventListener('change', (e) => {
             this.currentDataset = e.target.value;
         });
+
+        // View Toggles
+        document.getElementById('btn-toggle-table').addEventListener('click', () => this.toggleView('table'));
+        document.getElementById('btn-toggle-chart').addEventListener('click', () => this.toggleView('chart'));
+    }
+
+    toggleView(view) {
+        const btnTable = document.getElementById('btn-toggle-table');
+        const btnChart = document.getElementById('btn-toggle-chart');
+        const chatSection = document.querySelector('.chat-section');
+
+        if (view === 'table') {
+            btnTable.classList.add('active');
+            btnChart.classList.remove('active');
+            this.chartContainer.style.display = 'none';
+            document.getElementById('table-container').style.display = 'block';
+            if (chatSection) chatSection.style.display = 'none';
+            this.renderTable(this.currentData);
+        } else {
+            btnTable.classList.remove('active');
+            btnChart.classList.add('active');
+            document.getElementById('table-container').style.display = 'none';
+            this.chartContainer.style.display = 'block';
+            if (chatSection) chatSection.style.display = 'flex';
+            // Resize chart in case container changed size
+            if (this.chart) this.chart.resize();
+        }
+    }
+
+    renderTable(data) {
+        const container = document.getElementById('table-container');
+        if (!data || data.length === 0) {
+            container.innerHTML = '<div style="padding: 20px; text-align: center; color: #666;">No data available</div>';
+            return;
+        }
+
+        const headers = Object.keys(data[0]);
+        let html = '<table class="data-table"><thead><tr>';
+
+        // Headers
+        headers.forEach(h => html += `<th>${h}</th>`);
+        html += '</tr></thead><tbody>';
+
+        // Rows
+        data.forEach(row => {
+            html += '<tr>';
+            headers.forEach(h => {
+                let cellValue = row[h];
+                let cellClass = '';
+                let cellContent = cellValue;
+
+                // Simple formatting logic based on column name or value type
+                if (typeof cellValue === 'number') {
+                    // Currency formatting
+                    if (h.toLowerCase().includes('revenue') || h.toLowerCase().includes('profit') || h.toLowerCase().includes('cost')) {
+                        cellContent = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(cellValue);
+                    }
+                    // Percentage formatting
+                    else if (h.toLowerCase().includes('percent') || h.toLowerCase().includes('change')) {
+                        const percentVal = (cellValue * 100).toFixed(1) + '%';
+                        if (cellValue > 0) {
+                            cellContent = `<span class="badge-positive">+${percentVal}</span>`;
+                        } else if (cellValue < 0) {
+                            cellContent = `<span class="badge-negative">${percentVal}</span>`;
+                        } else {
+                            cellContent = percentVal;
+                        }
+                    }
+                    // Standard number
+                    else {
+                        cellContent = cellValue.toLocaleString();
+                    }
+                }
+
+                // Specific column styling (Currency Code)
+                if (h === 'Global Currency' || h === 'Currency') {
+                    cellContent = `<span class="currency-badge">${cellValue}</span>`;
+                }
+
+                html += `<td class="${cellClass}">${cellContent}</td>`;
+            });
+            html += '</tr>';
+        });
+        html += '</tbody></table>';
+        container.innerHTML = html;
     }
 
     async loadDatasets() {
@@ -470,11 +555,14 @@ class HilaApp {
 
             // Fix tooltip formatters that break multi-series charts
             // The LLM sometimes generates formatters like "{b0}: {c0}" which only work for single series
+            // Also catches complex broken formatters like "{c[0]}" seen in bubble charts
             if (option.tooltip && option.tooltip.formatter) {
                 // Remove restrictive formatters - let ECharts use its default multi-series tooltip
-                if (typeof option.tooltip.formatter === 'string' &&
-                    (option.tooltip.formatter.includes('{b0}') || option.tooltip.formatter.includes('{c0}'))) {
-                    delete option.tooltip.formatter;
+                if (typeof option.tooltip.formatter === 'string') {
+                    const brokenPatterns = ['{b0}', '{c0}', '{c[', '{b['];
+                    if (brokenPatterns.some(pattern => option.tooltip.formatter.includes(pattern))) {
+                        delete option.tooltip.formatter;
+                    }
                 }
             }
 
@@ -642,9 +730,15 @@ class HilaApp {
 
             // Handle scatter and bubble charts (multi-dimensional data points)
             if (option.series && option.series.length > 0) {
+                // Fix: Ensure we catch 'bubble' type even if previous loop missed it
                 const firstSeries = option.series[0];
-                if (firstSeries.type === 'scatter' || firstSeries.type === 'effectScatter') {
+                if (firstSeries.type === 'scatter' || firstSeries.type === 'effectScatter' || firstSeries.type === 'bubble') {
                     option.series = option.series.map(series => {
+                        // Ensure type is valid ECharts 'scatter'
+                        if (series.type === 'bubble') {
+                            series.type = 'scatter';
+                        }
+
                         // Handle both formats: {dataField: [...]} or [{dataField: [...]}]
                         let dataFieldObj = series.data;
                         if (Array.isArray(series.data) && series.data.length > 0 && series.data[0].dataField) {
@@ -656,56 +750,170 @@ class HilaApp {
 
                             // If dataField is an array of column names [x, y] or [x, y, size]
                             if (Array.isArray(fields)) {
-                                console.log('Scatter/bubble chart fields:', fields);
+                                // Resolve column names to match actual data keys (handles Case/Space/Dash mismatches)
+                                const availableColumns = filteredData.length > 0 ? Object.keys(filteredData[0]) : [];
+                                const resolvedFields = fields.map(f => this.resolveColumnName(f, availableColumns));
+
+                                console.log('Original fields:', fields);
+                                console.log('Resolved fields:', resolvedFields);
+
+                                // Use resolved fields for data mapping
+                                const validFields = resolvedFields.map((f, i) => f || fields[i]); // Fallback to original if not found
+
+                                console.log('Scatter/bubble chart fields:', validFields);
 
                                 // Check if we have enough dimensions for a scatter plot
-                                if (fields.length < 2) {
-                                    console.warn(`Scatter chart needs at least 2 dimensions, got ${fields.length}. Adding row index as x-axis.`);
-                                    // Fallback: use row index as x-axis and the single field as y-axis
+                                if (validFields.length < 2) {
+                                    console.warn(`Scatter chart needs at least 2 dimensions, got ${validFields.length}. Adding row index as x-axis.`);
                                     series.data = filteredData.map((row, index) => {
-                                        const value = row[fields[0]];
+                                        const value = row[validFields[0]];
                                         const numValue = typeof value === 'string' ? parseFloat(value) : value;
                                         return [index, numValue];
                                     });
                                 } else {
-                                    // Normal case: 2 or 3 dimensions
-                                    series.data = filteredData.map(row => {
-                                        // Parse values to numbers (data comes as strings from CSV)
-                                        const point = fields.map(field => {
-                                            const value = row[field];
-                                            const numValue = typeof value === 'string' ? parseFloat(value) : value;
-                                            return numValue;
-                                        });
-                                        return point;
-                                    });
-                                }
+                                    // Special handling for Categorical X/Y (e.g. "FY26 Q3 vs FY26 Q4")
+                                    // Use validFields instead of fields variable
+                                    const fields = validFields; // Local override for the rest of the block
+                                    // Special handling for Categorical X/Y (e.g. "FY26 Q3 vs FY26 Q4")
+                                    // If fields are referencing time periods like "FY26-Q3", they are usually Value columns, but if the user asks for "Time vs Time",
+                                    // it implies comparing values OF those times.
+                                    // BUT, if the user asks for "Bubble chart of Product vs Region sized by Revenue", X/Y are categorical.
 
-                                console.log('Scatter/bubble data points:', series.data.length);
-                                console.log('Sample point:', series.data[0]);
+                                    // 1. Check if X or Y fields are actually present in the data as KEYS (which they are)
+                                    // or if they are VALUES in a column.
+                                    // In this dataset (financials), quarters are KEYS. So `row["FY26-Q3"]` returns a numeric value.
+                                    // So standard scatter plot logic above works for "Performance vs Performance".
+
+                                    // 2. HOWEVER, if the user asks for "Q3 vs Q4 performance", they might mean:
+                                    // X-axis = Q3 Revenue, Y-axis = Q4 Revenue.
+                                    // In that case, X and Y are numeric, and it works.
+
+                                    // 3. What if X-axis is "Product Group" (Categorical)?
+                                    // If field[0] is "Product Group Name", row[field[0]] is a string string (e.g. "Baby Care").
+                                    // Scatter/Bubble charts in ECharts generally expect Numeric X/Y.
+                                    // If X is categorical, we need to map categories to indices (0, 1, 2...)
+                                    // and set xAxis.type = 'category' and xAxis.data = [categories].
+
+                                    let xIsCategorical = false;
+                                    let yIsCategorical = false;
+                                    let xCategories = [];
+                                    let yCategories = [];
+
+                                    // Sample the first valid row to check types
+                                    if (filteredData.length > 0) {
+                                        const sampleRow = filteredData[0];
+                                        const xVal = sampleRow[fields[0]];
+                                        const yVal = sampleRow[fields[1]];
+
+                                        if (isNaN(parseFloat(xVal)) && typeof xVal === 'string') xIsCategorical = true;
+                                        if (isNaN(parseFloat(yVal)) && typeof yVal === 'string') yIsCategorical = true;
+                                    }
+
+                                    if (xIsCategorical || yIsCategorical) {
+                                        console.log('Detected categorical axis in scatter/bubble chart');
+
+                                        if (xIsCategorical) {
+                                            // Extract unique categories
+                                            xCategories = [...new Set(filteredData.map(r => r[fields[0]]))];
+                                            // Update xAxis config
+                                            if (!Array.isArray(option.xAxis)) option.xAxis = [option.xAxis || {}];
+                                            option.xAxis[0].type = 'category';
+                                            option.xAxis[0].data = xCategories;
+                                        }
+
+                                        if (yIsCategorical) {
+                                            // Extract unique categories
+                                            yCategories = [...new Set(filteredData.map(r => r[fields[1]]))];
+                                            // Update yAxis config
+                                            if (!Array.isArray(option.yAxis)) option.yAxis = [option.yAxis || {}];
+                                            option.yAxis[0].type = 'category';
+                                            option.yAxis[0].data = yCategories;
+                                        }
+
+                                        // Map data to indices
+                                        series.data = filteredData.map(row => {
+                                            let xVal = row[fields[0]];
+                                            let yVal = row[fields[1]];
+
+                                            if (xIsCategorical) xVal = xCategories.indexOf(xVal);
+                                            else xVal = typeof xVal === 'string' ? parseFloat(xVal) : xVal;
+
+                                            if (yIsCategorical) yVal = yCategories.indexOf(yVal);
+                                            else yVal = typeof yVal === 'string' ? parseFloat(yVal) : yVal;
+
+                                            // Z-value (Size)
+                                            let zVal = 0;
+                                            if (fields.length > 2) {
+                                                let rawZ = row[fields[2]];
+                                                zVal = typeof rawZ === 'string' ? parseFloat(rawZ) : rawZ;
+                                            }
+
+                                            return fields.length > 2 ? [xVal, yVal, zVal] : [xVal, yVal];
+                                        });
+
+                                    } else {
+                                        // Standard Numeric/Numeric case
+                                        series.data = filteredData.map(row => {
+                                            const point = fields.map(field => {
+                                                const value = row[field];
+                                                const numValue = typeof value === 'string' ? parseFloat(value) : value;
+                                                return numValue;
+                                            });
+                                            return point;
+                                        });
+                                    }
+                                }
 
                                 // Validate data - filter out invalid points
                                 series.data = series.data.filter(point => {
-                                    return Array.isArray(point) && point.length >= 2 && point.every(val => !isNaN(val) && val !== null && val !== undefined);
+                                    // Ensure point is an array
+                                    if (!Array.isArray(point)) return false;
+
+                                    // X and Y must be valid numbers
+                                    const xValid = !isNaN(point[0]) && point[0] !== null && point[0] !== undefined;
+                                    const yValid = !isNaN(point[1]) && point[1] !== null && point[1] !== undefined;
+
+                                    return xValid && yValid; // Size (index 2) is optional/handled below
                                 });
 
-                                if (series.data.length === 0) {
-                                    console.warn('No valid scatter/bubble data points after filtering');
-                                }
+                                // Check if the 3rd dimension (size) effectively exists
+                                // If all sizes are NaN, it means the field mapping was likely wrong (e.g. "Total Revenue" column not found)
+                                const hasValidSize = fields.length === 3 && series.data.some(p => !isNaN(p[2]));
 
                                 // For bubble charts (3 dimensions), add symbolSize function
-                                if (fields.length === 3 && !series.symbolSize && series.data.length > 0) {
-                                    // Use the third dimension (size) to scale bubble size
-                                    const sizeValues = series.data.map(point => point[2]);
-                                    const maxSize = Math.max(...sizeValues);
-                                    const minSize = Math.min(...sizeValues);
+                                if (hasValidSize && !series.symbolSize && series.data.length > 0) {
+                                    // Filter out points with invalid size for the resizing logic ONLY
+                                    // (or treat them as min size)
+                                    const validSizePoints = series.data.filter(p => !isNaN(p[2]));
+                                    if (validSizePoints.length > 0) {
+                                        // Use the third dimension (size) to scale bubble size
+                                        const sizeValues = validSizePoints.map(point => point[2]);
+                                        const maxSize = Math.max(...sizeValues);
+                                        const minSize = Math.min(...sizeValues);
 
-                                    console.log('Bubble size range:', minSize, 'to', maxSize);
+                                        console.log('Bubble size range:', minSize, 'to', maxSize);
 
-                                    series.symbolSize = function (data) {
-                                        // Scale between 10 and 60 pixels based on size value
-                                        const normalized = (data[2] - minSize) / (maxSize - minSize);
-                                        return 10 + normalized * 50;
-                                    };
+                                        series.symbolSize = function (data) {
+                                            const val = data[2];
+                                            if (isNaN(val) || val === null || val === undefined) return 10; // Default if size missing
+
+                                            // Safety check for single value or invalid range
+                                            if (maxSize === minSize) return 30;
+
+                                            // Scale between 10 and 60 pixels
+                                            const normalized = (val - minSize) / (maxSize - minSize);
+                                            return 10 + normalized * 50;
+                                        };
+                                    }
+                                } else if (fields.length === 3 && !hasValidSize) {
+                                    console.warn('Bubble chart requested but 3rd dimension yielded no valid data. Falling back to uniform size.');
+                                    // We keep the data as [x, y, NaN], but since we don't set symbolSize function based on index 2,
+                                    // ECharts will use default symbolSize.
+                                    // Optionally we can slice the data to be just [x, y] to be clean.
+                                    series.data = series.data.map(p => [p[0], p[1]]);
+                                    // Reset type to scatter explicitly if not already
+                                    series.type = 'scatter';
+                                    series.symbolSize = 15; // Set a nice default size
                                 }
                             }
                             // If dataField is a single column (fallback)
@@ -842,6 +1050,33 @@ class HilaApp {
         return [min, q1, median, q3, max];
     }
 
+    resolveColumnName(name, availableColumns) {
+        if (!name || !availableColumns) return name;
+        if (availableColumns.includes(name)) return name;
+
+        const normalizedSearch = String(name).toLowerCase().replace(/[^a-z0-9]/g, '');
+
+        // Try to find a match by standardizing both
+        const match = availableColumns.find(col => {
+            const normalizedCol = String(col).toLowerCase().replace(/[^a-z0-9]/g, '');
+            return normalizedCol === normalizedSearch;
+        });
+
+        // If no exact fuzzy match, look for "Total" variants or common swaps
+        if (!match) {
+            // "FY27 Total" vs "Total FY27 Revenue"
+            if (name.includes('Total') && name.includes('Revenue')) {
+                const year = name.match(/FY\d{2}/)?.[0];
+                if (year) {
+                    const candidate = `${year} Total`;
+                    if (availableColumns.includes(candidate)) return candidate;
+                }
+            }
+        }
+
+        return match || name;
+    }
+
     getQuantile(sorted, q) {
         const pos = (sorted.length - 1) * q;
         const base = Math.floor(pos);
@@ -914,6 +1149,14 @@ class HilaApp {
         };
 
         // Premium Tooltip (Shadows, blur)
+        // Check for broken formatters one last time before merging
+        if (option.tooltip && typeof option.tooltip.formatter === 'string') {
+            const brokenPatterns = ['{b0}', '{c0}', '{c[', '{b['];
+            if (brokenPatterns.some(pattern => option.tooltip.formatter.includes(pattern))) {
+                delete option.tooltip.formatter;
+            }
+        }
+
         option.tooltip = {
             ...option.tooltip,
             backgroundColor: tooltipBg,

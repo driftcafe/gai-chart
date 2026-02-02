@@ -50,7 +50,7 @@
 
           <!-- Left: View Toggles -->
           <div class="toggle-group">
-            <button class="toggle-btn" title="Table View">
+            <button class="toggle-btn" id="btn-toggle-table" title="Table View">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none">
                 <path
                   d="M26.3845 28H13.6155C13.1552 28 12.7708 27.8458 12.4625 27.5375C12.1542 27.2292 12 26.8448 12 26.3845L12 13.6155C12 13.1552 12.1542 12.7708 12.4625 12.4625C12.7708 12.1542 13.1552 12 13.6155 12L26.3845 12C26.8448 12 27.2292 12.1542 27.5375 12.4625C27.8458 12.7708 28 13.1552 28 13.6155V26.3845C28 26.8448 27.8458 27.2292 27.5375 27.5375C27.2292 27.8458 26.8448 28 26.3845 28ZM13 16.5H27V13.6155C27 13.4615 26.9359 13.3204 26.8077 13.1923C26.6796 13.0641 26.5385 13 26.3845 13L13.6155 13C13.4615 13 13.3204 13.0641 13.1923 13.1923C13.0641 13.3204 13 13.4615 13 13.6155V16.5ZM15.8845 17.5H13L13 26.3845C13 26.5385 13.0641 26.6796 13.1923 26.8077C13.3204 26.9359 13.4615 27 13.6155 27H15.8845L15.8845 17.5ZM24.1155 17.5V27H26.3845C26.5385 27 26.6796 26.9359 26.8077 26.8077C26.9359 26.6796 27 26.5385 27 26.3845V17.5H24.1155ZM23.1155 17.5H16.8845V27H23.1155V17.5Z"
@@ -58,7 +58,7 @@
               </svg>
             </button>
             <div class="toggle-separator"></div>
-            <button class="toggle-btn active" title="Chart View">
+            <button class="toggle-btn active" id="btn-toggle-chart" title="Chart View">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none">
                 <path
                   d="M50 28V27H68V28H50ZM51 25.2308V20H53V25.2308H51ZM55.6537 25.2308V15H57.6537V25.2308H55.6537ZM60.327 25.2308V18H62.327V25.2308H60.327ZM65 25.2308V12H67V25.2308H65Z"
@@ -111,6 +111,11 @@
             <div class="loading-text">Generating chart...</div>
           </div>
         </div>
+
+        <!-- Table View (Hidden by default) -->
+        <div id="table-container" style="width: 100%; height: 100%; display: none; overflow: auto; background: white;">
+          <!-- Table content will be injected here -->
+        </div>
       </div>
 
       <!-- Chat Interface Section (Inside the card) -->
@@ -127,7 +132,7 @@
         <div class="chat-input-container">
           <div id="context-chip-container" class="context-chip-container" style="display: none;"></div>
           <div class="input-wrapper">
-            <input type="text" id="chat-input" class="chat-input" placeholder="Ask a question about your data..."
+            <input type="text" id="chat-input" class="chat-input" placeholder="Refine your data visualization..."
               autocomplete="off">
             <button id="send-button" class="btn-send-icon" aria-label="Generate Chart">
               <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40" fill="none">
