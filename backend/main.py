@@ -112,7 +112,7 @@ async def initialize_app():
         # Create a default line chart configuration
         # Show revenue trends across quarters for top 5 product groups
         config = {
-            "title": "Product Group Revenue Trends (FY26-FY27)",
+            "title": "Top 5 Product Groups by Revenue",
             "echartOption": {
                 "tooltip": {
                     "trigger": "axis"

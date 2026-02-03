@@ -276,6 +276,8 @@ For scatter and bubble charts, each data point needs an array format:
 - Bubble: [x_value, y_value, size_value]
 Use dataField references like: {"dataField": ["column_x", "column_y"]} or {"dataField": ["column_x", "column_y", "column_size"]}
 
+If the user mentions "quadrants", "matrix", or "benchmarks" in a scatter/bubble chart, always inject `markLine` with `{ type: 'average' }` for both X and Y axes in the ECharts series config.
+
 AESTHETIC GUIDELINES:
 1. Use this professional financial color palette:
    - Primary: #2563eb (blue)
@@ -435,6 +437,8 @@ For scatter and bubble charts, each data point needs an array format:
 - Scatter: [x_value, y_value]
 - Bubble: [x_value, y_value, size_value]
 Use dataField references like: {"dataField": ["column_x", "column_y"]} or {"dataField": ["column_x", "column_y", "column_size"]}
+
+If the user mentions "quadrants", "matrix", or "benchmarks" in a scatter/bubble chart, always inject `markLine` with `{ type: 'average' }` for both X and Y axes in the ECharts series config.
 
 AESTHETIC GUIDELINES:
 1. Use this professional financial color palette:
