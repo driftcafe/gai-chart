@@ -12,7 +12,7 @@ import uvicorn
 from data_service import data_service
 
 # Toggle between real LLM and mock for testing
-USE_MOCK_LLM = True  # Set to True for testing without API credits
+USE_MOCK_LLM = False  # Set to True for testing without API credits
 
 if USE_MOCK_LLM:
     from mock_llm_service import mock_llm_service as llm_service
@@ -195,6 +195,7 @@ async def generate_chart(request: ChartRequest):
         llm_response = llm_service.generate_chart_config(
             user_query=request.query,
             schema=schema,
+            data=data,
             conversation_history=request.conversation_history
         )
         
