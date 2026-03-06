@@ -8,6 +8,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 import uvicorn
+import sys
+import os
+
+# Ensure the backend directory is in the Python path for Vercel
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from data_service import data_service
 
@@ -52,7 +57,7 @@ class ChartResponse(BaseModel):
 
 class DatasetInfo(BaseModel):
     name: str
-    schema: Dict[str, Any]
+    dataset_schema: Dict[str, Any]
     sample_count: int
 
 
@@ -82,7 +87,7 @@ async def get_dataset_info(dataset_name: str):
         
         return DatasetInfo(
             name=dataset_name,
-            schema=schema,
+            dataset_schema=schema,
             sample_count=len(data)
         )
     except Exception as e:
