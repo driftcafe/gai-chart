@@ -13,9 +13,7 @@ import json
 from typing import Dict, List, Any, Optional
 from datetime import datetime
 from anthropic import Anthropic
-from dotenv import load_dotenv
-
-load_dotenv()
+# Removed load_dotenv() for Vercel - env vars should come from dashboard
 
 
 class UsageTracker:
@@ -211,9 +209,10 @@ class LLMService:
             }
             
         except Exception as e:
+            error_type = type(e).__name__
             return {
                 "success": False,
-                "error": str(e),
+                "error": f"LLM Error ({error_type}): {str(e)}",
                 "conversation_history": messages
             }
     
