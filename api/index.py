@@ -74,7 +74,21 @@ async def root():
 
 @app.get("/api/health")
 async def health():
-    return {"status": "ok", "version": "1.0.1", "llm_client_status": "ready" if llm_service.client else "missing_key"}
+    import httpx
+    network_check = "unknown"
+    try:
+        async with httpx.AsyncClient(timeout=2.0) as client:
+            resp = await client.get("https://www.google.com")
+            network_check = f"ok (status {resp.status_code})"
+    except Exception as e:
+        network_check = f"failed: {str(e)}"
+        
+    return {
+        "status": "ok", 
+        "version": "1.0.2", 
+        "llm_client_status": "ready" if llm_service.client else "missing_key",
+        "outbound_network": network_check
+    }
 
 
 @app.get("/api/datasets", response_model=List[str])
