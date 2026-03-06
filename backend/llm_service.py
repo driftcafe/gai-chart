@@ -172,6 +172,16 @@ class LLMService:
             # Parse JSON from response
             try:
                 config = self._extract_json(response_text)
+                
+                # Check for out-of-scope response
+                if config.get("error") == "OUT_OF_SCOPE":
+                    return {
+                        "success": False,
+                        "error": "This demo is scoped to a limited dataset. Click the table icon in the top left to view the available raw data and try asking questions about it.",
+                        "out_of_scope": True,
+                        "conversation_history": messages
+                    }
+                    
             except (json.JSONDecodeError, ValueError) as e:
                 # Log the full response for debugging
                 print(f"\n{'='*60}")
@@ -278,12 +288,18 @@ AESTHETIC GUIDELINES:
 5. Responsive sizing
 
 OUTPUT FORMAT:
-Return a JSON object with this structure:
+Return a JSON object with this structure for valid chart requests:
 {
   "chartType": "line|bar|area|scatter|pie|combination",
   "title": "Chart title based on user query",
   "echartOption": { /* valid ECharts option object WITH RAW DATA EMBEDDED IN IT */ },
   "explanation": "Brief explanation of the visualization choice"
+}
+
+OUT OF SCOPE REQUESTS:
+If the user asks a question completely unrelated to generating a chart from the provided dataset (e.g., "What is the capital of France?", "Write a poem", "What is an LLM?"), you MUST return THIS specific JSON object instead:
+{
+  "error": "OUT_OF_SCOPE"
 }""",
                 "cache_control": {"type": "ephemeral"}
             }
@@ -333,12 +349,18 @@ AESTHETIC GUIDELINES:
 5. Responsive sizing
 
 OUTPUT FORMAT:
-Return a JSON object with this structure:
+Return a JSON object with this structure for valid chart requests:
 {
   "chartType": "line|bar|area|scatter|pie|combination",
   "title": "Chart title based on user query",
   "echartOption": { /* valid ECharts option object WITH RAW DATA EMBEDDED IN IT */ },
   "explanation": "Brief explanation of the visualization choice"
+}
+
+OUT OF SCOPE REQUESTS:
+If the user asks a question completely unrelated to generating a chart from the provided dataset (e.g., "What is the capital of France?", "Write a poem", "What is an LLM?"), you MUST return THIS specific JSON object instead:
+{
+  "error": "OUT_OF_SCOPE"
 }"""
     
     def _build_user_message(self, query: str, schema: Dict[str, Any], data: List[Dict[str, Any]]) -> str:

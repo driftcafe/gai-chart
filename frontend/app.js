@@ -360,6 +360,11 @@ class HilaApp {
 
                 // Render chart with data injection
                 this.renderChart(result.config, result.data);
+            } else if (result.out_of_scope) {
+                // Return out of scope message gracefully without showing an error box
+                this.addMessage('assistant', result.error);
+                // Optionally clear context tracking if it's no longer relevant
+                this.conversationHistory = result.conversation_history;
             } else {
                 this.showError(result.error || 'Failed to generate chart');
                 this.addMessage('assistant', `Error: ${result.error || 'Failed to generate chart'}`);
