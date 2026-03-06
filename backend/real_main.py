@@ -97,22 +97,16 @@ async def get_dataset_info(dataset_name: str):
 @app.get("/api/init", response_model=ChartResponse)
 async def initialize_app():
     """
-    Cold Start endpoint - loads default_data.csv and returns a pre-configured chart.
+    Cold Start endpoint - loads default_data.py and returns a pre-configured chart.
     This allows the app to show data immediately on page load.
     """
-    import csv
-    import os
-    
     try:
-        # Read default_data.csv
-        csv_path = os.path.join(os.path.dirname(__file__), "default_data.csv")
-        
-        with open(csv_path, 'r') as f:
-            reader = csv.DictReader(f)
-            data = list(reader)
+        # Read default_data from static python file
+        from default_data import DEFAULT_DATA
+        data = DEFAULT_DATA
         
         if not data:
-            raise Exception("default_data.csv is empty")
+            raise Exception("DEFAULT_DATA is empty")
         
         # Create a default line chart configuration
         # Show revenue trends across quarters for top 5 product groups
