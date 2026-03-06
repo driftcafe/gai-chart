@@ -12,7 +12,7 @@ import uvicorn
 from data_service import data_service
 
 # Toggle between real LLM and mock for testing
-USE_MOCK_LLM = False  # Set to True for testing without API credits
+USE_MOCK_LLM = True  # Set to True for testing without API credits
 
 if USE_MOCK_LLM:
     from mock_llm_service import mock_llm_service as llm_service
@@ -100,7 +100,7 @@ async def initialize_app():
     
     try:
         # Read default_data.csv
-        csv_path = os.path.join(os.path.dirname(__file__), "..", "default_data.csv")
+        csv_path = os.path.join(os.path.dirname(__file__), "default_data.csv")
         
         with open(csv_path, 'r') as f:
             reader = csv.DictReader(f)

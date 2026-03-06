@@ -24,7 +24,7 @@ class DataService:
         import os
         
         try:
-            csv_path = os.path.join(os.path.dirname(__file__), "..", "default_data.csv")
+            csv_path = os.path.join(os.path.dirname(__file__), "default_data.csv")
             with open(csv_path, 'r') as f:
                 reader = csv.DictReader(f)
                 return list(reader)
