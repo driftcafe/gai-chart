@@ -106,10 +106,10 @@ class LLMService:
     def __init__(self):
         """Initialize Anthropic client and usage tracker."""
         api_key = os.getenv("ANTHROPIC_API_KEY")
-        if not api_key:
-            raise ValueError("ANTHROPIC_API_KEY environment variable not set")
+        self.client = None
+        if api_key:
+            self.client = Anthropic(api_key=api_key)
         
-        self.client = Anthropic(api_key=api_key)
         self.model = "claude-3-haiku-20240307"  # Available with your API key
         self.conversation_history: List[Dict[str, str]] = []
         self.usage_tracker = UsageTracker()
@@ -139,6 +139,13 @@ class LLMService:
         """
         system_prompt = self._build_system_prompt_with_cache()
         
+        if not self.client:
+            return {
+                "success": False,
+                "error": "ANTHROPIC_API_KEY environment variable is not configured. Please add it to your Vercel Project Settings to enable chat.",
+                "conversation_history": conversation_history or []
+            }
+            
         # Keep track of conversation
         messages = []
         
