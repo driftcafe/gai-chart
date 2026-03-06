@@ -19,17 +19,12 @@ class DataService:
         }
     
     def _load_default_csv(self) -> List[Dict[str, Any]]:
-        """Load default_data.csv if it exists."""
-        import csv
-        import os
-        
+        """Load default_data from static python file."""
         try:
-            csv_path = os.path.join(os.path.dirname(__file__), "default_data.csv")
-            with open(csv_path, 'r') as f:
-                reader = csv.DictReader(f)
-                return list(reader)
+            from default_data import DEFAULT_DATA
+            return DEFAULT_DATA
         except Exception as e:
-            print(f"Warning: Could not load default_data.csv: {e}")
+            print(f"Warning: Could not load default_data.py: {e}")
             return []
     
     def _generate_quarterly_data(self) -> List[Dict[str, Any]]:
