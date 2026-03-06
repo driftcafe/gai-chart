@@ -151,13 +151,8 @@
 
         <div class="chat-input-container">
           <!-- Suggestion Chips for Demo -->
-          <div class="suggestion-chips" style="display: flex; gap: 8px; overflow-x: auto; padding: 0 0 12px 0;">
-            <button class="chip"
-              onclick="document.getElementById('chat-input').value='Compare top 5 products'; document.getElementById('send-button').click();">Compare
-              top 5 products</button>
-            <button class="chip"
-              onclick="document.getElementById('chat-input').value='Show as a bar chart'; document.getElementById('send-button').click();">Show
-              as a bar chart</button>
+          <div class="suggestion-chips" id="suggestion-chips"
+            style="display: flex; gap: 8px; overflow-x: auto; padding: 0 0 12px 0;">
           </div>
 
           <div id="context-chip-container" class="context-chip-container" style="display: none;"></div>

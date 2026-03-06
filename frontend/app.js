@@ -26,11 +26,24 @@ class HilaApp {
         this.chartHistory = []; // Stores { config, data, timestamp }
         this.selectedContext = null; // Stores { name, value, series }
 
+        // Suggestion Chips state
+        this.suggestionPool = [
+            "What is the profit margin?",
+            "Compare region performance",
+            "Show area chart of costs",
+            "Pie chart of revenue by region"
+        ];
+        this.activeSuggestions = [
+            "Compare top 5 products",
+            "Show as a bar chart"
+        ];
+
         this.initializeElements();
         this.attachEventListeners();
         this.loadDatasets();
         this.initTheme(); // Initialize theme
         this.initColdStart(); // Load default chart on startup
+        this.initSuggestions(); // Load suggestions
     }
 
     initializeElements() {
@@ -45,6 +58,7 @@ class HilaApp {
         this.errorContainer = document.getElementById('error-container');
         this.themeToggle = document.getElementById('theme-toggle');
         this.contextChipContainer = document.getElementById('context-chip-container'); // New context chip container
+        this.suggestionContainer = document.getElementById('suggestion-chips');
 
         // Save the original icon HTML (SVG)
         if (this.sendButton) {
@@ -67,6 +81,41 @@ class HilaApp {
         // View Toggles
         document.getElementById('btn-toggle-table').addEventListener('click', () => this.toggleView('table'));
         document.getElementById('btn-toggle-chart').addEventListener('click', () => this.toggleView('chart'));
+    }
+
+    initSuggestions() {
+        if (!this.suggestionContainer) return;
+        this.renderSuggestions();
+    }
+
+    renderSuggestions() {
+        if (!this.suggestionContainer) return;
+        this.suggestionContainer.innerHTML = '';
+        this.activeSuggestions.forEach(suggestion => {
+            const btn = document.createElement('button');
+            btn.className = 'chip';
+            btn.textContent = suggestion;
+            btn.onclick = () => this.handleSuggestionClick(suggestion);
+            this.suggestionContainer.appendChild(btn);
+        });
+    }
+
+    handleSuggestionClick(suggestion) {
+        // Set input and submit
+        this.chatInput.value = suggestion;
+        this.handleSendMessage();
+
+        // Swap out the suggestion
+        this.activeSuggestions = this.activeSuggestions.filter(s => s !== suggestion);
+        if (this.suggestionPool.length > 0) {
+            // Get random new suggestion
+            const randomIndex = Math.floor(Math.random() * this.suggestionPool.length);
+            const newSuggestion = this.suggestionPool.splice(randomIndex, 1)[0];
+            this.activeSuggestions.push(newSuggestion);
+            // Optionally put the clicked one back into the pool to cycle
+            this.suggestionPool.push(suggestion);
+        }
+        this.renderSuggestions();
     }
 
     toggleView(view) {
