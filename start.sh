@@ -22,8 +22,8 @@ echo ""
 
 # Start backend in background
 echo "🔧 Starting backend server on http://localhost:8000..."
-cd backend
-../backend/venv/bin/python main.py &
+cd api
+../api/venv/bin/python index.py &
 BACKEND_PID=$!
 cd ..
 
