@@ -91,10 +91,14 @@ async def health():
     except Exception as e:
         anthropic_check = f"failed: {str(e)}"
         
+    api_key = os.getenv("ANTHROPIC_API_KEY", "")
+    masked_key = f"{api_key[:7]}...{api_key[-4:]}" if len(api_key) > 10 else "not_configured"
+        
     return {
         "status": "ok", 
-        "version": "1.0.3", 
+        "version": "1.0.4", 
         "llm_client_status": "ready" if llm_service.client else "missing_key",
+        "api_key_masked": masked_key,
         "outbound_network": network_check,
         "anthropic_connectivity": anthropic_check
     }

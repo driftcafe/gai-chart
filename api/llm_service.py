@@ -12,6 +12,7 @@ import os
 import json
 from typing import Dict, List, Any, Optional
 from datetime import datetime
+import httpx
 from anthropic import Anthropic
 # Removed load_dotenv() for Vercel - env vars should come from dashboard
 
@@ -106,7 +107,12 @@ class LLMService:
         api_key = os.getenv("ANTHROPIC_API_KEY")
         self.client = None
         if api_key:
-            self.client = Anthropic(api_key=api_key)
+            self.client = Anthropic(
+                api_key=api_key,
+                http_client=httpx.Client(
+                    timeout=30.0
+                )
+            )
         
         self.model = "claude-3-haiku-20240307"  # Available with your API key
         self.conversation_history: List[Dict[str, str]] = []
