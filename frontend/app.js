@@ -300,6 +300,11 @@ class HilaApp {
                         firstMsg.classList.add('active'); // Initially active
                     }
                 }
+
+                // Add tip bubble after a slight delay for better visibility
+                setTimeout(() => {
+                    this.addMessage('assistant', "💡 Tip: Try clicking a data point in the chart to ask a follow-up question about the scoped data!");
+                }, 1500);
             } else {
                 console.warn('Cold start failed, showing empty state');
             }
