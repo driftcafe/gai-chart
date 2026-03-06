@@ -106,7 +106,16 @@ class LLMService:
         """Initialize Anthropic client and usage tracker."""
         api_key = os.getenv("ANTHROPIC_API_KEY")
         self.client = None
+        
         if api_key:
+            # Robust cleaning: remove common copy-paste prefixes and whitespace
+            api_key = api_key.strip()
+            if api_key.startswith("ANTHROPIC_API_KEY="):
+                api_key = api_key.replace("ANTHROPIC_API_KEY=", "").strip()
+            
+            # Remove quotes if they exist
+            api_key = api_key.strip("'").strip('"')
+            
             self.client = Anthropic(
                 api_key=api_key,
                 http_client=httpx.Client(
