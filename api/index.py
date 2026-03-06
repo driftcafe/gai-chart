@@ -68,8 +68,13 @@ async def root():
     return {
         "service": "Hila - Generative UI for Financial Data",
         "status": "operational",
-        "version": "1.0.0"
+        "version": "1.0.1",
+        "deploy_id": "v3_fixed_paths"
     }
+
+@app.get("/api/health")
+async def health():
+    return {"status": "ok", "version": "1.0.1", "llm_client_status": "ready" if llm_service.client else "missing_key"}
 
 
 @app.get("/api/datasets", response_model=List[str])
