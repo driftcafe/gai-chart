@@ -3,10 +3,7 @@
     "builds": [
         {
             "src": "backend/main.py",
-            "use": "@vercel/python",
-            "config": {
-                "includeFiles": "backend/default_data.csv"
-            }
+            "use": "@vercel/python"
         },
         {
             "src": "frontend/**",
@@ -26,5 +23,10 @@
             "src": "/(.*)",
             "dest": "/frontend/$1"
         }
-    ]
+    ],
+    "functions": {
+        "backend/main.py": {
+            "includeFiles": "backend/default_data.csv"
+        }
+    }
 }
