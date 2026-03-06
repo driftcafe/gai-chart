@@ -25,40 +25,45 @@ class MockLLMService:
         This is a mock implementation for testing without API credits.
         """
         query_lower = user_query.lower()
-        columns = [col['name'] for col in schema['columns']]
         
-        # Detect chart type from query
-        if 'pie' in query_lower:
-            chart_type = 'pie'
-        elif 'bar' in query_lower:
-            chart_type = 'bar'
-        elif 'area' in query_lower:
-            chart_type = 'area'
-        elif 'scatter' in query_lower:
-            chart_type = 'scatter'
+        # PREDEFINED DEMO RESPONSES
+        if "compare top 5 products" in query_lower or "top 5" in query_lower:
+            config = self._generate_top_5_products_config(schema)
+        elif "show as a bar chart" in query_lower or "bar chart" in query_lower:
+            config = self._generate_bar_chart_config(schema)
         else:
-            chart_type = 'line'  # default
-        
-        # Build config based on common patterns
-        if 'revenue' in query_lower and 'cost' in query_lower:
-            config = self._generate_revenue_vs_costs_config(schema, chart_type)
-        elif 'margin' in query_lower:
-            config = self._generate_margin_config(schema, chart_type)
-        elif 'region' in query_lower:
-            config = self._generate_regional_config(schema, chart_type)
-        else:
-            config = self._generate_default_config(schema, chart_type)
+            # Detect chart type from query
+            if 'pie' in query_lower:
+                chart_type = 'pie'
+            elif 'bar' in query_lower:
+                chart_type = 'bar'
+            elif 'area' in query_lower:
+                chart_type = 'area'
+            elif 'scatter' in query_lower:
+                chart_type = 'scatter'
+            else:
+                chart_type = 'line'  # default
+            
+            # Build config based on common patterns
+            if 'revenue' in query_lower and 'cost' in query_lower:
+                config = self._generate_revenue_vs_costs_config(schema, chart_type)
+            elif 'margin' in query_lower:
+                config = self._generate_margin_config(schema, chart_type)
+            elif 'region' in query_lower:
+                config = self._generate_regional_config(schema, chart_type)
+            else:
+                config = self._generate_default_config(schema, chart_type)
         
         # Build conversation history
         messages = conversation_history or []
         messages.append({"role": "user", "content": user_query})
-        messages.append({"role": "assistant", "content": json.dumps(config)})
+        messages.append({"role": "assistant", "content": json.dumps(config) if isinstance(config, dict) else config})
         
         return {
             "success": True,
             "config": config,
             "conversation_history": messages,
-            "raw_response": json.dumps(config)
+            "raw_response": json.dumps(config) if isinstance(config, dict) else config
         }
     
     def _generate_revenue_vs_costs_config(self, schema: Dict[str, Any], chart_type: str) -> Dict[str, Any]:
@@ -241,20 +246,115 @@ class MockLLMService:
             "explanation": "Generated a bar chart comparing revenue across regions"
         }
     
+    def _generate_top_5_products_config(self, schema: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate a hardcoded robust configuration for Top 5 Products."""
+        return {
+            "chartType": "line",
+            "title": "Top 5 Product Groups by Revenue",
+            "echartOption": {
+                "tooltip": {"trigger": "axis"},
+                "legend": {"data": ["Household Products", "Beverages", "Dairy Alternatives", "Pet Care", "Snacks"]},
+                "xAxis": {
+                    "type": "category",
+                    "data": ["FY26-Q1", "FY26-Q2", "FY26-Q3", "FY26-Q4", "FY27-Q1", "FY27-Q2", "FY27-Q3", "FY27-Q4"]
+                },
+                "yAxis": {"type": "value", "name": "Revenue ($)"},
+                "series": [
+                    {
+                        "name": "Household Products",
+                        "type": "line",
+                        "data": {"dataField": ["FY26-Q1", "FY26-Q2", "FY26-Q3", "FY26-Q4", "FY27-Q1", "FY27-Q2", "FY27-Q3", "FY27-Q4"]}
+                    },
+                    {
+                        "name": "Beverages",
+                        "type": "line",
+                        "data": {"dataField": ["FY26-Q1", "FY26-Q2", "FY26-Q3", "FY26-Q4", "FY27-Q1", "FY27-Q2", "FY27-Q3", "FY27-Q4"]}
+                    },
+                    {
+                        "name": "Dairy Alternatives",
+                        "type": "line",
+                        "data": {"dataField": ["FY26-Q1", "FY26-Q2", "FY26-Q3", "FY26-Q4", "FY27-Q1", "FY27-Q2", "FY27-Q3", "FY27-Q4"]}
+                    },
+                    {
+                        "name": "Pet Care",
+                        "type": "line",
+                        "data": {"dataField": ["FY26-Q1", "FY26-Q2", "FY26-Q3", "FY26-Q4", "FY27-Q1", "FY27-Q2", "FY27-Q3", "FY27-Q4"]}
+                    },
+                    {
+                        "name": "Snacks",
+                        "type": "line",
+                        "data": {"dataField": ["FY26-Q1", "FY26-Q2", "FY26-Q3", "FY26-Q4", "FY27-Q1", "FY27-Q2", "FY27-Q3", "FY27-Q4"]}
+                    }
+                ]
+            },
+            "dataMapping": {
+                "filters": [
+                    {
+                        "field": "Product Group Name",
+                        "operator": "in",
+                        "value": ["Household Products", "Beverages", "Dairy Alternatives", "Pet Care", "Snacks"]
+                    }
+                ]
+            },
+            "explanation": "Here is a line chart comparing the revenue trends across quarters for the selected product groups."
+        }
+
+    def _generate_bar_chart_config(self, schema: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate a hardcoded robust configuration for Bar charts."""
+        return {
+            "chartType": "bar",
+            "title": "Revenue Comparison - Bar Chart",
+            "echartOption": {
+                "tooltip": {"trigger": "axis", "axisPointer": {"type": "shadow"}},
+                "legend": {"data": ["Household Products", "Dairy Alternatives", "Snacks"]},
+                "xAxis": {
+                    "type": "category",
+                    "data": ["FY26-Q1", "FY26-Q2", "FY26-Q3", "FY26-Q4", "FY27-Q1", "FY27-Q2", "FY27-Q3", "FY27-Q4"]
+                },
+                "yAxis": {"type": "value", "name": "Revenue ($)"},
+                "series": [
+                    {
+                        "name": "Household Products",
+                        "type": "bar",
+                        "data": {"dataField": ["FY26-Q1", "FY26-Q2", "FY26-Q3", "FY26-Q4", "FY27-Q1", "FY27-Q2", "FY27-Q3", "FY27-Q4"]}
+                    },
+                    {
+                        "name": "Dairy Alternatives",
+                        "type": "bar",
+                        "data": {"dataField": ["FY26-Q1", "FY26-Q2", "FY26-Q3", "FY26-Q4", "FY27-Q1", "FY27-Q2", "FY27-Q3", "FY27-Q4"]}
+                    },
+                    {
+                        "name": "Snacks",
+                        "type": "bar",
+                        "data": {"dataField": ["FY26-Q1", "FY26-Q2", "FY26-Q3", "FY26-Q4", "FY27-Q1", "FY27-Q2", "FY27-Q3", "FY27-Q4"]}
+                    }
+                ]
+            },
+            "dataMapping": {
+                "filters": [
+                    {
+                        "field": "Product Group Name",
+                        "operator": "in",
+                        "value": ["Household Products", "Dairy Alternatives", "Snacks"]
+                    }
+                ]
+            },
+            "explanation": "I've converted the current view into a Bar Chart to emphasize total amounts rather than the continuous trend."
+        }
+
     def _generate_default_config(self, schema: Dict[str, Any], chart_type: str) -> Dict[str, Any]:
         """Generate a default config when pattern doesn't match."""
-        columns = [col for col in schema['columns'] if col['type'] in ['integer', 'number']]
-        temporal_col = next((col for col in schema['columns'] if col['type'] == 'temporal'), None)
-        
-        x_field = temporal_col['name'] if temporal_col else schema['columns'][0]['name']
-        y_field = columns[0]['name'] if columns else schema['columns'][1]['name']
+        # Fix the index error by falling back gracefully if no numerical columns are found properly
+        # due to default csv string parsing.
+        x_field = schema['columns'][1]['name'] if len(schema['columns']) > 1 else 'Items'
+        y_field = schema['columns'][3]['name'] if len(schema['columns']) > 3 else 'Values'
         
         return {
             "chartType": chart_type,
-            "title": f"{y_field.title()} Over Time",
+            "title": f"Comparing Data Types",
             "echartOption": {
                 "tooltip": {"trigger": "axis"},
-                "legend": {"data": [y_field.title()], "bottom": 10},
+                "legend": {"data": [y_field], "bottom": 10},
                 "grid": {
                     "left": "3%",
                     "right": "4%",
@@ -276,7 +376,7 @@ class MockLLMService:
                 },
                 "series": [
                     {
-                        "name": y_field.title(),
+                        "name": y_field,
                         "type": chart_type,
                         "data": {"dataField": y_field},
                         "itemStyle": {"color": "#2563eb"},
@@ -288,7 +388,7 @@ class MockLLMService:
                 "xAxis": x_field,
                 "series": [y_field]
             },
-            "explanation": f"Generated a {chart_type} chart showing {y_field} trends"
+            "explanation": f"Generated a {chart_type} chart view."
         }
 
 
