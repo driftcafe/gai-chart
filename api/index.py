@@ -83,11 +83,20 @@ async def health():
     except Exception as e:
         network_check = f"failed: {str(e)}"
         
+    anthropic_check = "unknown"
+    try:
+        async with httpx.AsyncClient(timeout=2.0) as client:
+            resp = await client.get("https://api.anthropic.com/v1/messages")
+            anthropic_check = f"ok (status {resp.status_code})"
+    except Exception as e:
+        anthropic_check = f"failed: {str(e)}"
+        
     return {
         "status": "ok", 
-        "version": "1.0.2", 
+        "version": "1.0.3", 
         "llm_client_status": "ready" if llm_service.client else "missing_key",
-        "outbound_network": network_check
+        "outbound_network": network_check,
+        "anthropic_connectivity": anthropic_check
     }
 
 
