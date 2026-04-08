@@ -1,4 +1,4 @@
-# Hila - Generative UI for Financial Data
+# Generative UI for Financial Data
 
 A Proof of Concept (PoC) demonstrating how to transform natural language questions into dynamic, interactive charts using LLMs while maintaining **data safety** for sensitive financial information.
 
@@ -6,7 +6,7 @@ A Proof of Concept (PoC) demonstrating how to transform natural language questio
 
 **Transform reactive chart development into proactive, AI-driven visualization generation.**
 
-Instead of spending cycles redesigning and integrating new chart types based on user feedback, Hila uses Claude to generate visualization configurations on-the-fly based on user intent.
+Instead of spending cycles redesigning and integrating new chart types based on user feedback, uses Claude to generate visualization configurations on-the-fly based on user intent.
 
 ## 🔒 Data Safety Architecture
 
