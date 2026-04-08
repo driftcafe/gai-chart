@@ -1,6 +1,6 @@
-# Example Queries for Hila
+# Example Queries
 
-Try these natural language queries to see Hila in action!
+Try these natural language queries
 
 ## Basic Visualizations
 
@@ -98,16 +98,16 @@ Available columns: `month`, `active_users`, `churn_rate`, `arpu`
 
 ```
 You: "Show me Q3 revenue vs costs"
-Hila: [Generates line chart]
+Answer: [Generates line chart]
 
 You: "Change this to a bar chart"
-Hila: [Updates to bar chart]
+Answer: [Updates to bar chart]
 
 You: "Add margin to the chart"
-Hila: [Adds margin series]
+Answer: [Adds margin series]
 
 You: "Compare North America vs Europe"
-Hila: [Adds region breakdown]
+Answer: [Adds region breakdown]
 ```
 
 ## Financial Analysis Examples
