@@ -135,4 +135,4 @@ Answer: [Adds region breakdown]
 
 ---
 
-**Pro Tip**: Hila learns from context! The more you chat, the better it understands what you're looking for.
+**Pro Tip**: learns from context! The more you chat, the better it understands what you're looking for.
