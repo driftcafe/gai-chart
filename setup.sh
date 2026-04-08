@@ -7,25 +7,27 @@ echo "🚀 Setting up Hila - Generative UI for Financial Data"
 echo ""
 
 # Check if ANTHROPIC_API_KEY is set
-if [ -f "backend/.env" ]; then
-    if grep -q "your_api_key_here" backend/.env; then
-        echo "⚠️  WARNING: Please add your ANTHROPIC_API_KEY to backend/.env"
-        echo "   Edit backend/.env and replace 'your_api_key_here' with your actual API key"
+if [ -f "api/.env" ]; then
+    if grep -q "your_api_key_here" api/.env; then
+        echo "⚠️  WARNING: Please add your ANTHROPIC_API_KEY to api/.env"
+        echo "   Edit api/.env and replace 'your_api_key_here' with your actual API key"
         echo ""
     else
         echo "✅ Environment file configured"
     fi
 else
     echo "⚠️  Creating .env file from template..."
-    cp .env.example backend/.env
-    echo "   Please edit backend/.env and add your ANTHROPIC_API_KEY"
+    # Ensure api directory exists
+    mkdir -p api
+    cp .env.example api/.env
+    echo "   Please edit api/.env and add your ANTHROPIC_API_KEY"
     echo ""
 fi
 
 # Check if virtual environment exists
-if [ ! -d "backend/venv" ]; then
+if [ ! -d "api/venv" ]; then
     echo "📦 Creating Python virtual environment..."
-    python3 -m venv backend/venv
+    python3 -m venv api/venv
     echo "✅ Virtual environment created"
 else
     echo "✅ Virtual environment exists"
@@ -33,7 +35,7 @@ fi
 
 # Install dependencies
 echo "📦 Installing Python dependencies..."
-backend/venv/bin/pip install -q -r backend/requirements.txt
+api/venv/bin/pip install -q -r api/requirements.txt
 echo "✅ Dependencies installed"
 
 echo ""
@@ -42,7 +44,7 @@ echo ""
 echo "To start Hila:"
 echo ""
 echo "1. Start the backend server:"
-echo "   cd backend && ../backend/venv/bin/python main.py"
+echo "   cd api && ../api/venv/bin/python index.py"
 echo ""
 echo "2. In a new terminal, start the frontend:"
 echo "   cd frontend && python3 -m http.server 3000"

@@ -8,7 +8,7 @@ import sys
 import os
 
 # Add backend to path
-backend_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'backend')
+backend_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'api')
 sys.path.insert(0, backend_path)
 
 from data_service import data_service
@@ -89,9 +89,9 @@ if __name__ == "__main__":
         print_sample_data()
         
         print("✅ All tests passed!")
-        print("\n💡 Next steps:")
-        print("   1. Add your ANTHROPIC_API_KEY to backend/.env")
-        print("   2. Run: cd backend && ../backend/venv/bin/python main.py")
+        print("💡 Next steps:")
+        print("   1. Add your ANTHROPIC_API_KEY to api/.env")
+        print("   2. Run: cd api && ../api/venv/bin/python index.py")
         print("   3. Open http://localhost:3000 in your browser")
         print("\n")
         

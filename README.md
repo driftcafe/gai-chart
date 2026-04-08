@@ -32,11 +32,19 @@ User Query → Schema Only → LLM → Chart Config → Frontend → Data Inject
 - Node.js (for serving frontend)
 - Anthropic API Key
 
-### 1. Backend Setup
+### Option 1: Automated Start
+
+```bash
+./start.sh
+```
+
+### Option 2: Manual Start
+
+#### 1. Backend Setup
 
 ```bash
 # Navigate to backend directory
-cd backend
+cd api
 
 # Create virtual environment
 python -m venv venv
@@ -50,16 +58,16 @@ cp ../.env.example .env
 # Edit .env and add your ANTHROPIC_API_KEY
 ```
 
-### 2. Start Backend Server
+#### 2. Start Backend Server
 
 ```bash
-# From backend directory
-python main.py
+# From api directory
+python index.py
 ```
 
 The API will be available at `http://localhost:8000`
 
-### 3. Start Frontend
+#### 3. Start Frontend
 
 ```bash
 # From frontend directory (in a new terminal)
@@ -76,19 +84,37 @@ The UI will be available at `http://localhost:3000`
 
 ### 4. Try It Out!
 
-Open your browser to `http://localhost:3000` and ask questions like:
+Open your browser to `http://localhost:3000` and try these queries:
 
+**Basic:**
 - "Show me Q3 Revenue vs Costs"
+- "Show me revenue trends"
+- "Compare costs by region"
+- "Create a pie chart of revenue"
+
+**Advanced:**
+- "Show revenue vs costs with margin overlay"
 - "Compare margins across regions"
-- "Create a line chart of revenue trends"
-- "Add a trendline" (conversational refinement)
+- "Compare North America vs Europe performance"
+
+**Refinement (Conversational):**
+- "Change this to a bar chart"
+- "Add a trendline"
+- "Make it an area chart"
+
+## 🛠️ Troubleshooting
+
+- **"API key not configured"**: Edit `api/.env` and add your Anthropic API key.
+- **"Connection refused"**: Make sure the backend is running on port 8000.
+- **"Module not found"**: Run: `pip install -r requirements.txt` from within your activated virtual environment.
+- **Charts not rendering**: Check the browser console for errors, and verify the backend is returning data.
 
 ## 📁 Project Structure
 
 ```
 gai-charts/
-├── backend/
-│   ├── main.py              # FastAPI server with API endpoints
+├── api/
+│   ├── index.py             # FastAPI server with API endpoints
 │   ├── llm_service.py       # Claude integration with data-safe prompts
 │   ├── data_service.py      # Mock financial data + schema extraction
 │   └── requirements.txt     # Python dependencies
@@ -97,6 +123,7 @@ gai-charts/
 │   ├── styles.css           # Apple-esque aesthetic
 │   └── app.js               # Chart rendering + data injection logic
 ├── .env.example             # Environment variable template
+├── start.sh                 # Quick start script
 └── README.md                # This file
 ```
 

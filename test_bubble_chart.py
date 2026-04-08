@@ -7,10 +7,10 @@ import os
 import sys
 import json
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'backend'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'api'))
 
 from dotenv import load_dotenv
-load_dotenv('backend/.env')
+load_dotenv('api/.env')
 
 from llm_service import llm_service
 from data_service import data_service

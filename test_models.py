@@ -9,12 +9,12 @@ from anthropic import Anthropic
 from dotenv import load_dotenv
 
 # Load environment
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'backend'))
-load_dotenv('backend/.env')
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'api'))
+load_dotenv('api/.env')
 
-api_key = os.getenv("ANTHROPIC_API_KEY")
-if not api_key:
-    print("❌ ANTHROPIC_API_KEY not found in backend/.env")
+# Check if Anthropic API key is set
+if not os.getenv("ANTHROPIC_API_KEY"):
+    print("❌ ANTHROPIC_API_KEY not found in api/.env")
     sys.exit(1)
 
 client = Anthropic(api_key=api_key)

@@ -14,6 +14,11 @@ from typing import Dict, List, Any, Optional
 from datetime import datetime
 import httpx
 from anthropic import Anthropic
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 # Removed load_dotenv() for Vercel - env vars should come from dashboard
 
 

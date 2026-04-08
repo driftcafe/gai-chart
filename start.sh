@@ -6,12 +6,12 @@ echo "🚀 Starting Hila..."
 echo ""
 
 # Check if API key is configured
-if ! grep -q "sk-ant-" backend/.env 2>/dev/null; then
+if ! grep -q "sk-ant-" api/.env 2>/dev/null; then
     echo "❌ ERROR: ANTHROPIC_API_KEY not configured!"
     echo ""
     echo "Please follow these steps:"
     echo "1. Get your API key from https://console.anthropic.com/"
-    echo "2. Edit backend/.env and replace 'your_api_key_here' with your actual key"
+    echo "2. Edit api/.env and replace 'your_api_key_here' with your actual key"
     echo "3. Run this script again"
     echo ""
     exit 1
