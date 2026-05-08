@@ -6,11 +6,11 @@
 echo "🚀 Setting up Hila - Generative UI for Financial Data"
 echo ""
 
-# Check if ANTHROPIC_API_KEY is set
+# Check if GEMINI_API_KEY is set
 if [ -f "backend/.env" ]; then
-    if grep -q "your_api_key_here" backend/.env; then
-        echo "⚠️  WARNING: Please add your ANTHROPIC_API_KEY to backend/.env"
-        echo "   Edit backend/.env and replace 'your_api_key_here' with your actual API key"
+    if grep -q "your_key_here" backend/.env; then
+        echo "⚠️  WARNING: Please add your GEMINI_API_KEY to backend/.env"
+        echo "   Edit backend/.env and replace 'your_key_here' with your actual API key"
         echo ""
     else
         echo "✅ Environment file configured"
@@ -18,7 +18,7 @@ if [ -f "backend/.env" ]; then
 else
     echo "⚠️  Creating .env file from template..."
     cp .env.example backend/.env
-    echo "   Please edit backend/.env and add your ANTHROPIC_API_KEY"
+    echo "   Please edit backend/.env and add your GEMINI_API_KEY"
     echo ""
 fi
 

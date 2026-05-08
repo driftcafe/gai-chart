@@ -30,7 +30,7 @@ User Query → Schema Only → LLM → Chart Config → Frontend → Data Inject
 ### Prerequisites
 - Python 3.9+
 - Node.js (for serving frontend)
-- Anthropic API Key
+- Gemini API Key
 
 ### 1. Backend Setup
 
@@ -47,7 +47,7 @@ pip install -r requirements.txt
 
 # Set up environment variables
 cp ../.env.example .env
-# Edit .env and add your ANTHROPIC_API_KEY
+# Edit .env and add your GEMINI_API_KEY
 ```
 
 ### 2. Start Backend Server
@@ -121,7 +121,7 @@ gai-charts/
 
 - **Backend**: Python + FastAPI
 - **Frontend**: HTML/JS (lightweight, no build steps)
-- **AI Model**: Anthropic Claude 3.5 Sonnet
+- **AI Model**: Google Gemini 1.5 Flash
 - **Charts**: Apache ECharts (interactive, professional)
 - **Data**: Mock financial data (structured for easy SQL swap)
 
@@ -242,7 +242,7 @@ MIT License - feel free to use this in your projects!
 ## 🙏 Acknowledgments
 
 - **Apache ECharts** for the excellent charting library
-- **Anthropic** for Claude API
+- **Google** for Gemini API
 - **FastAPI** for the modern Python web framework
 
 ---

@@ -90,7 +90,7 @@ if __name__ == "__main__":
         
         print("✅ All tests passed!")
         print("\n💡 Next steps:")
-        print("   1. Add your ANTHROPIC_API_KEY to backend/.env")
+        print("   1. Add your GEMINI_API_KEY to backend/.env")
         print("   2. Run: cd backend && ../backend/venv/bin/python main.py")
         print("   3. Open http://localhost:3000 in your browser")
         print("\n")
